@@ -18,7 +18,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
 
     try {
       await onSubmit(codigo.trim())
-    } catch (err) {
+    } catch {
       setErro('Código inválido ou já utilizado.')
     } finally {
       setCarregando(false)
@@ -26,26 +26,43 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
   }
 
   return (
-    <div className="codigo-container">
-      <form onSubmit={handleSubmit} className="codigo-form">
-        <h1>Digite seu código</h1>
-        <p>Insira o código que você recebeu para acessar.</p>
+    <div className="login-page">
+      <section className="login-story" aria-label="Boas-vindas">
+        <div className="monogram" aria-hidden="true">M</div>
+        <span className="login-eyebrow">Nosso dia</span>
+        <h1>Que bom ter você com a gente.</h1>
+        <p>Este espaço foi preparado para guardar cada detalhe de uma celebração muito especial.</p>
+        <div className="story-line" aria-hidden="true" />
+        <span className="story-note">Com carinho, Marina &amp; João</span>
+      </section>
 
-        <input
-          type="text"
-          value={codigo}
-          onChange={(e) => setCodigo(e.target.value)}
-          placeholder="Ex: ABC123"
-          disabled={carregando}
-          autoFocus
-        />
+      <section className="login-panel">
+        <form onSubmit={handleSubmit} className="codigo-form">
+          <span className="login-eyebrow">Acesso reservado</span>
+          <h2>Entre com seu código</h2>
+          <p>Use o código que recebemos especialmente para você.</p>
 
-        {erro && <span className="codigo-erro">{erro}</span>}
+          <label htmlFor="codigo">Código do convite</label>
+          <input
+            id="codigo"
+            type="text"
+            value={codigo}
+            onChange={(e) => setCodigo(e.target.value)}
+            placeholder="Ex.: ABC123"
+            disabled={carregando}
+            autoFocus
+            autoComplete="one-time-code"
+            spellCheck="false"
+          />
 
-        <button type="submit" disabled={carregando || !codigo.trim()}>
-          {carregando ? 'Verificando...' : 'Entrar'}
-        </button>
-      </form>
+          {erro && <span className="codigo-erro" role="alert">{erro}</span>}
+
+          <button type="submit" disabled={carregando || !codigo.trim()}>
+            {carregando ? 'Conferindo...' : 'Abrir convite'}
+          </button>
+          <small>O código diferencia letras maiúsculas e minúsculas.</small>
+        </form>
+      </section>
     </div>
   )
 }
