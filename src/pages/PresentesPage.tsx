@@ -248,8 +248,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
             if (!presente.visivel && !jaEscolhido) return null
             return <article className="guest-gift" key={presente.id}>
               {presente.imagem_url ? <img src={presente.imagem_url} alt="" /> : <div className="gift-placeholder">P</div>}
-              <div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div>
-              <button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button>
+              <div className="guest-gift-details"><div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div><button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button></div>
             </article>
           })}
         </div>

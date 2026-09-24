@@ -422,7 +422,7 @@ function AdminPage() {
             <div className="cadastro-admin-layout">
               <form className="crud-form" id="form-companhia" onSubmit={salvarCompanhia}>
                 <div><span className="admin-kicker">Cadastro</span><h2>{companhiaEditando ? 'Editar companhia' : 'Nova companhia'}</h2><p>Associe cada companhia ao convidado responsável pelo acesso.</p></div>
-                <label>Nome<input value={nomeCompanhia} onChange={(event) => setNomeCompanhia(event.target.value)} placeholder="Ex.: Pedro" /></label>
+                <label>Nome<input value={nomeCompanhia} onChange={(event) => setNomeCompanhia(event.target.value)} placeholder="Ex.: Slowan" /></label>
                 <label>Convidado responsável<select value={convidadoDaCompanhia} onChange={(event) => setConvidadoDaCompanhia(event.target.value)}><option value="">Selecione um convidado</option>{convidados.map((convidado) => <option value={convidado.id} key={convidado.id}>{convidado.nome}</option>)}</select></label>
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : companhiaEditando ? 'Salvar alterações' : 'Adicionar'}</button>{companhiaEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>
               </form>

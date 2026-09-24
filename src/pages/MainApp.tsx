@@ -176,7 +176,7 @@ function MainApp() {
                     <span className="admin-kicker">Seu convite</span>
                     <h2 id="companions-title">Quem vem com você?</h2>
                     <div className="companions-list">
-                        {companhias.map((companhia) => <div className="companion-item" key={companhia.id}><div><strong>{companhia.nome}</strong><span>{companhia.confirmacao_presenca === true ? 'Presença confirmada' : companhia.confirmacao_presenca === false ? 'Não poderá comparecer' : 'Aguardando confirmação'}</span></div><button type="button" disabled={salvando} onClick={() => void confirmarCompanhia(companhia, companhia.confirmacao_presenca !== true)}>{companhia.confirmacao_presenca === true ? 'Remover confirmação' : 'Confirmar'}</button></div>)}
+                        {companhias.map((companhia) => <div className="companion-item" key={companhia.id}><div><strong>{companhia.nome}</strong><span>{companhia.confirmacao_presenca === true ? 'Presença confirmada' : companhia.confirmacao_presenca === false ? 'Não poderá comparecer' : 'Aguardando confirmação'}</span></div><button type="button" disabled={salvando} onClick={() => void confirmarCompanhia(companhia, companhia.confirmacao_presenca !== true)}>{companhia.confirmacao_presenca === true ? 'Cancelar' : 'Confirmar'}</button></div>)}
                         {!companhias.length && <p className="empty-state">Você não possui companhias neste convite.</p>}
                     </div>
                 </section>

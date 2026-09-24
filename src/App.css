@@ -53,6 +53,12 @@
   transform: translateY(-1px);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+  transform: none;
+}
+
 .button {
   padding: 12px 20px;
 }
@@ -474,6 +480,9 @@
 .message-list {
   display: grid;
   gap: 12px;
+  max-height: min(55vh, 520px);
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .message-item {
@@ -662,11 +671,14 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+  max-height: min(58vh, 520px);
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .guest-gift {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: 14px;
   min-width: 0;
   padding: 14px;
@@ -676,24 +688,32 @@
 
 .guest-gift img,
 .guest-gift .gift-placeholder {
-  width: 64px;
-  height: 64px;
-  flex: 0 0 auto;
+  width: 110px;
+  height: 110px;
+  flex: 0 0 110px;
   border-radius: 3px;
   object-fit: cover;
 }
 
 .guest-gift-copy {
+  width: 100%;
+  min-width: 0;
+}
+
+.guest-gift-details {
+  display: flex;
   min-width: 0;
   flex: 1;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 14px;
 }
 
 .guest-gift h3 {
-  overflow: hidden;
   color: var(--ink);
   font-size: 0.98rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  margin: 0;
 }
 
 .guest-gift p {
@@ -703,7 +723,7 @@
 }
 
 .guest-gift button {
-  flex: 0 0 auto;
+  width: 100%;
   padding: 9px 13px;
   border: 0;
   border-radius: 999px;
@@ -760,6 +780,9 @@
 .my-contributions {
   display: grid;
   gap: 10px;
+  max-height: min(48vh, 380px);
+  overflow-y: auto;
+  padding-right: 6px;
 }
 
 .my-contribution {
@@ -968,6 +991,11 @@
   gap: 16px;
   padding: 13px 18px;
   border-bottom: 1px solid var(--line);
+}
+
+.presence-table {
+  max-height: min(48vh, 360px);
+  overflow-y: auto;
 }
 
 .presence-table-row strong,
