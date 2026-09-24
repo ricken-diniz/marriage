@@ -21,7 +21,9 @@ type Companhia = {
 type Presente = {
   id: string
   nome: string
+  descricao: string | null
   valor: number
+  valor_cota: number
   imagem_url: string | null
 }
 
@@ -43,7 +45,9 @@ function AdminPage() {
   const [nomeCompanhia, setNomeCompanhia] = useState('')
   const [convidadoDaCompanhia, setConvidadoDaCompanhia] = useState('')
   const [nomePresente, setNomePresente] = useState('')
+  const [descricaoPresente, setDescricaoPresente] = useState('')
   const [valorPresente, setValorPresente] = useState('')
+  const [valorCotaPresente, setValorCotaPresente] = useState('')
   const [imagemPresente, setImagemPresente] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
@@ -63,7 +67,7 @@ function AdminPage() {
         .order('nome'),
       supabase
         .from('presentes')
-        .select('id, nome, valor, imagem_url')
+        .select('id, nome, descricao, valor, valor_cota, imagem_url')
         .order('nome'),
     ])
 
@@ -100,7 +104,9 @@ function AdminPage() {
     setNomeCompanhia('')
     setConvidadoDaCompanhia('')
     setNomePresente('')
+    setDescricaoPresente('')
     setValorPresente('')
+    setValorCotaPresente('')
     setImagemPresente('')
     setErro(null)
   }
@@ -173,13 +179,16 @@ function AdminPage() {
   async function salvarPresente(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const valor = Number(valorPresente.replace(',', '.'))
-    if (!nomePresente.trim() || !Number.isFinite(valor) || valor < 0) return
+    const valorCota = Number(valorCotaPresente.replace(',', '.'))
+    if (!nomePresente.trim() || !Number.isFinite(valor) || valor < 0 || !Number.isFinite(valorCota) || valorCota <= 0) return
 
     setSalvando(true)
     setErro(null)
     const dados = {
       nome: nomePresente.trim(),
+      descricao: descricaoPresente.trim() || null,
       valor,
+      valor_cota: valorCota,
       imagem_url: imagemPresente.trim() || null,
     }
     const query = presenteEditando
@@ -245,7 +254,9 @@ function AdminPage() {
     setAba('presentes')
     setPresenteEditando(presente.id)
     setNomePresente(presente.nome)
+    setDescricaoPresente(presente.descricao ?? '')
     setValorPresente(String(presente.valor))
+    setValorCotaPresente(String(presente.valor_cota))
     setImagemPresente(presente.imagem_url ?? '')
   }
 
@@ -378,7 +389,7 @@ function AdminPage() {
           {aba === 'presentes' && (
             <CrudSection
               title={presenteEditando ? 'Editar presente' : 'Novo presente'}
-              description="Defina o item, o valor e uma imagem opcional para a lista."
+              description="Defina o valor total do presente, o preço de cada cota e uma imagem opcional."
               onSubmit={salvarPresente}
               onCancel={limparFormularios}
               editing={Boolean(presenteEditando)}
@@ -389,8 +400,16 @@ function AdminPage() {
                 <input value={nomePresente} onChange={(event) => setNomePresente(event.target.value)} placeholder="Ex.: Jogo de cama" />
               </label>
               <label>
-                Valor
+                Descrição
+                <textarea value={descricaoPresente} onChange={(event) => setDescricaoPresente(event.target.value)} placeholder="Conte um pouco sobre este presente" rows={4} />
+              </label>
+              <label>
+                Valor total do presente
                 <input inputMode="decimal" value={valorPresente} onChange={(event) => setValorPresente(event.target.value)} placeholder="0,00" />
+              </label>
+              <label>
+                Valor da cota
+                <input inputMode="decimal" value={valorCotaPresente} onChange={(event) => setValorCotaPresente(event.target.value)} placeholder="0,00" />
               </label>
               <label>
                 URL da imagem
@@ -403,7 +422,7 @@ function AdminPage() {
                       {presente.imagem_url ? <img src={presente.imagem_url} alt="" /> : <div className="gift-placeholder">P</div>}
                       <div>
                         <strong>{presente.nome}</strong>
-                        <span>{moeda.format(presente.valor)}</span>
+                        <span>{moeda.format(presente.valor)} total · {moeda.format(presente.valor_cota)} por cota</span>
                       </div>
                     </div>
                     <div className="row-actions">

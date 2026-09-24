@@ -19,7 +19,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
     try {
       await onSubmit(codigo.trim())
     } catch {
-      setErro('Código inválido ou já utilizado.')
+      setErro('Código inválido.')
     } finally {
       setCarregando(false)
     }
