@@ -51,25 +51,26 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   useEffect(() => {
     async function carregarDados() {
       const [convidadoResult, presentesResult] = await Promise.all([
-        supabase.from('convidados').select('id').limit(1).maybeSingle(),
+        supabase.rpc('obter_convidado_atual').maybeSingle(),
         supabase.from('presentes').select('id, nome, descricao, valor, valor_cota, imagem_url, visivel').order('nome'),
       ])
 
       if (convidadoResult.error || presentesResult.error) {
         setErro((convidadoResult.error ?? presentesResult.error)?.message ?? 'Não foi possível carregar os presentes.')
       } else {
-        setConvidadoId(convidadoResult.data?.id ?? null)
+        const convidadoAtual = convidadoResult.data as { id: string } | null
+        setConvidadoId(convidadoAtual?.id ?? null)
         setPresentes((presentesResult.data ?? []) as Presente[])
-        if (convidadoResult.data?.id) {
+        if (convidadoAtual?.id) {
           const [contribuicoesResult, livresResult] = await Promise.all([
             supabase
               .from('contribuicoes')
               .select('id, presente_id, confirmado')
-              .eq('convidado_id', convidadoResult.data.id),
+              .eq('convidado_id', convidadoAtual.id),
             supabase
               .from('contribuicoes_livres')
               .select('id, valor_cota, confirmado')
-              .eq('convidado_id', convidadoResult.data.id)
+              .eq('convidado_id', convidadoAtual.id)
               .order('created_at', { ascending: false }),
           ])
           if (contribuicoesResult.error || livresResult.error) setErro((contribuicoesResult.error ?? livresResult.error)?.message ?? 'Não foi possível carregar suas contribuições.')
