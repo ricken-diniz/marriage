@@ -88,8 +88,7 @@ function AdminPage() {
   const [imagemPresente, setImagemPresente] = useState('')
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
-  const [consultandoCodigo, setConsultandoCodigo] = useState(false)
-  const [codigoVisivel, setCodigoVisivel] = useState<{ id: string; code: string } | null>(null)
+  const [codigosConvidados, setCodigosConvidados] = useState<Record<string, string>>({})
   const [erro, setErro] = useState<string | null>(null)
 
   async function carregarDados() {
@@ -127,7 +126,18 @@ function AdminPage() {
     if (resultadoComErro?.error) {
       setErro(resultadoComErro.error.message)
     } else {
-      setConvidados((convidadosResult.data ?? []) as Convidado[])
+      const convidadosCarregados = (convidadosResult.data ?? []) as Convidado[]
+      setConvidados(convidadosCarregados)
+      const codigos = await Promise.all(
+        convidadosCarregados.map(async (convidado) => {
+          try {
+            return [convidado.id, await verCodigoConvidado(convidado.id)] as const
+          } catch {
+            return [convidado.id, 'Código não disponível'] as const
+          }
+        }),
+      )
+      setCodigosConvidados(Object.fromEntries(codigos))
       setCompanhias((companhiasResult.data ?? []) as Companhia[])
       setPresentes((presentesResult.data ?? []) as Presente[])
       setContribuicoes((contribuicoesResult.data ?? []) as Contribuicao[])
@@ -281,24 +291,6 @@ function AdminPage() {
     await supabase.auth.signOut()
   }
 
-  async function alternarCodigo(convidadoId: string) {
-    if (codigoVisivel?.id === convidadoId) {
-      setCodigoVisivel(null)
-      return
-    }
-
-    setConsultandoCodigo(true)
-    setErro(null)
-    try {
-      const code = await verCodigoConvidado(convidadoId)
-      setCodigoVisivel({ id: convidadoId, code })
-    } catch (error) {
-      setErro(error instanceof Error ? error.message : 'Não foi possível recuperar o código.')
-    } finally {
-      setConsultandoCodigo(false)
-    }
-  }
-
   async function alternarConfirmacao(tabela: 'contribuicoes' | 'contribuicoes_livres', id: string, confirmado: boolean) {
     setSalvando(true)
     setErro(null)
@@ -405,13 +397,13 @@ function AdminPage() {
                 </div>
                 <label>Nome<input value={nomeConvidado} onChange={(event) => setNomeConvidado(event.target.value)} placeholder="Ex.: Jéssica e Nathan" /></label>
                 {!convidadoEditando && <label>Código de acesso<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Ex.: CASAMENTO2026" minLength={6} required /><small className="field-help">O código será a senha de acesso do convidado. Anote-o para entregar presencialmente.</small></label>}
-                {convidadoEditando && <label>Novo código de acesso (opcional)<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Deixe vazio para manter o atual" minLength={6} /><small className="field-help">O código atual nunca é exibido. Informe um novo código para substituí-lo.</small></label>}
+                {convidadoEditando && <label>Novo código de acesso (opcional)<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Deixe vazio para manter o atual" minLength={6} /><small className="field-help">O código atual aparece na listagem. Informe um novo código para substituí-lo.</small></label>}
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : convidadoEditando ? 'Salvar alterações' : 'Adicionar'}</button>{convidadoEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>
               </form>
               <section className="cadastro-list-panel">
                 <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Convidados cadastrados</h2></div><span>{convidados.length} itens</span></div>
                 <div className="admin-list">
-                  {convidados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span>{codigoVisivel?.id === convidado.id && <code className="access-code">{codigoVisivel.code}</code>}</div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" disabled={consultandoCodigo} onClick={() => void alternarCodigo(convidado.id)}>{codigoVisivel?.id === convidado.id ? 'Ocultar código' : 'Ver código'}</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
+                  {convidados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
                   {!convidados.length && <p className="empty-state">Nenhum convidado cadastrado.</p>}
                 </div>
               </section>
