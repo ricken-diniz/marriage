@@ -387,7 +387,7 @@ function AdminPage() {
                   <h2>{convidadoEditando ? 'Editar convidado' : 'Novo convidado'}</h2>
                   <p>Crie o convidado e defina o código que será entregue presencialmente.</p>
                 </div>
-                <label>Nome<input value={nomeConvidado} onChange={(event) => setNomeConvidado(event.target.value)} placeholder="Ex.: Marina e João" /></label>
+                <label>Nome<input value={nomeConvidado} onChange={(event) => setNomeConvidado(event.target.value)} placeholder="Ex.: Jéssica e Nathan" /></label>
                 {!convidadoEditando && <label>Código de acesso<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Ex.: CASAMENTO2026" minLength={6} required /><small className="field-help">O código será a senha de acesso do convidado. Anote-o para entregar presencialmente.</small></label>}
                 {convidadoEditando && <label>Novo código de acesso (opcional)<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Deixe vazio para manter o atual" minLength={6} /><small className="field-help">O código atual nunca é exibido. Informe um novo código para substituí-lo.</small></label>}
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : convidadoEditando ? 'Salvar alterações' : 'Adicionar'}</button>{convidadoEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>

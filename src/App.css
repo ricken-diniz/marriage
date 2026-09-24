@@ -240,7 +240,7 @@
   border-radius: 3px;
   outline: 0;
   color: var(--ink);
-  background: #f8faf5;
+  background: #f7fbff;
 }
 
 .crud-form input:focus,
@@ -317,7 +317,7 @@
   min-width: 0;
   padding: 7px 11px;
   color: var(--sage-dark);
-  background: #e9f0e3;
+  background: #e3eff8;
   font-size: 0.78rem;
   white-space: nowrap;
 }
@@ -357,7 +357,6 @@
 }
 
 .guest-header {
-  max-width: 700px;
   padding-bottom: 42px;
 }
 
@@ -595,7 +594,7 @@
 
 .guest-success {
   border-color: var(--sage);
-  background: #e9f0e3;
+  background: #e3eff8;
   color: var(--sage-dark);
 }
 
@@ -844,7 +843,7 @@
   border: 1px solid var(--line);
   border-radius: 3px;
   color: var(--ink);
-  background: #f8faf5;
+  background: #f7fbff;
 }
 
 .quantity-label {
@@ -953,7 +952,7 @@
 
 .presence-table-header {
   color: var(--muted);
-  background: #f2f4ef;
+  background: #f7fbff;
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1080,7 +1079,7 @@
 
 .gift-admin-summary div {
   padding: 13px;
-  background: #f2f4ef;
+  background: #f7fbff;
 }
 
 .gift-admin-summary span,
@@ -1102,7 +1101,7 @@
 .gift-visibility-status {
   padding: 12px 14px;
   border-left: 3px solid var(--lime);
-  background: #f8faf5;
+  background: #f7fbff;
 }
 
 .gift-modal-actions {
@@ -1167,7 +1166,7 @@
   border-radius: 3px;
   outline: 0;
   color: var(--ink);
-  background: #f8faf5;
+  background: #f7fbff;
 }
 
 .gift-edit-form input:focus,
@@ -1275,7 +1274,7 @@
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
-  background: #f2f4ef;
+  background: #f7fbff;
 }
 
 .login-story {
@@ -1376,7 +1375,7 @@
   display: grid;
   align-items: center;
   padding: 48px clamp(28px, 7vw, 104px);
-  background: #fbfaf4;
+  background: #f7fbff;
 }
 
 .codigo-form {
@@ -1415,7 +1414,7 @@
   margin-top: 8px;
   padding: 15px 0;
   border: 0;
-  border-bottom: 1px solid #b8c4b6;
+  border-bottom: 1px solid #d7e3ed;
   outline: 0;
   color: var(--ink);
   background: transparent;
@@ -1424,7 +1423,7 @@
 }
 
 .codigo-form input::placeholder {
-  color: #a9b2a6;
+  color: #9aa9b7;
   letter-spacing: 0.04em;
 }
 

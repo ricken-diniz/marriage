@@ -1,17 +1,17 @@
 :root {
   font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
-  color: #252b29;
+  color: #4C5A69;
   background: #f2f4ef;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  --ink: #252b29;
-  --muted: #6c7670;
-  --line: #dfe5dc;
-  --paper: #fffefa;
-  --sage: #1e5b4f;
-  --sage-dark: #12453b;
-  --lime: #d9e9bd;
+  --ink: #000080;
+  --muted: #4C5A69;
+  --line: #d7e3ed;
+  --paper: #ffffff;
+  --sage: #000080;
+  --sage-dark: #000066;
+  --lime: #B3CEE5;
   --coral: #e77b5d;
 }
 

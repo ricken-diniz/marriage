@@ -20,6 +20,7 @@ type Mensagem = {
     mensagem: string
     created_at: string
     convidado_id: string
+    convidado: { nome: string }[]
 }
 
 function MainApp() {
@@ -37,7 +38,7 @@ function MainApp() {
         const [convidadoResult, companhiasResult, mensagensResult] = await Promise.all([
             supabase.from('convidados').select('id, nome, confirmacao_presenca').limit(1).maybeSingle(),
             supabase.from('companhias').select('id, nome, confirmacao_presenca').order('nome'),
-            supabase.from('mensagens').select('id, mensagem, created_at, convidado_id').order('created_at', { ascending: false }),
+            supabase.from('mensagens').select('id, mensagem, created_at, convidado_id, convidado:convidados(nome)').order('created_at', { ascending: false }),
         ])
 
         const resultadoComErro = [convidadoResult, companhiasResult, mensagensResult].find((resultado) => resultado.error)
@@ -92,7 +93,7 @@ function MainApp() {
         const { data, error: saveError } = await supabase
             .from('mensagens')
             .insert({ convidado_id: convidado.id, mensagem: mensagemNova.trim() })
-            .select('id, mensagem, created_at, convidado_id')
+            .select('id, mensagem, created_at, convidado_id, convidado:convidados(nome)')
             .single()
         if (saveError) setErro(saveError.message)
         else {
@@ -138,11 +139,11 @@ function MainApp() {
                     <div className="guest-section-heading"><div><span className="admin-kicker">Mural</span><h2>Mensagens para os noivos</h2></div><span>{mensagens.length} mensagens</span></div>
                     <form className="message-form" onSubmit={registrarMensagem}>
                         <label htmlFor="nova-mensagem">Deixe uma mensagem</label>
-                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva algo especial para Marina e João..." rows={4} maxLength={500} />
+                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva algo especial para Jéssica e Nathan..." rows={4} maxLength={500} />
                         <button className="button button-primary" type="submit" disabled={salvando || !mensagemNova.trim()}>{salvando ? 'Enviando...' : 'Publicar mensagem'}</button>
                     </form>
                     <div className="message-list">
-                        {mensagens.map((item) => <article className="message-item" key={item.id}><p>{item.mensagem}</p><span>{item.convidado_id === convidado?.id ? 'Você' : 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span></article>)}
+                        {mensagens.map((item) => <article className="message-item" key={item.id}><p>{item.mensagem}</p><span>{item.convidado?.[0]?.nome ?? 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span></article>)}
                         {!mensagens.length && <p className="empty-state">Ainda não há mensagens. Seja o primeiro a escrever.</p>}
                     </div>
                 </div>
