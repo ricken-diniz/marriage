@@ -20,7 +20,7 @@ type Mensagem = {
     mensagem: string
     created_at: string
     convidado_id: string
-    convidado: { nome: string }[]
+    convidado: { nome: string } | { nome: string }[] | null
 }
 
 function MainApp() {
@@ -36,7 +36,7 @@ function MainApp() {
 
     async function carregarDados() {
         const [convidadoResult, companhiasResult, mensagensResult] = await Promise.all([
-            supabase.from('convidados').select('id, nome, confirmacao_presenca').limit(1).maybeSingle(),
+            supabase.rpc('obter_convidado_atual').maybeSingle(),
             supabase.from('companhias').select('id, nome, confirmacao_presenca').order('nome'),
             supabase.from('mensagens').select('id, mensagem, created_at, convidado_id, convidado:convidados(nome)').order('created_at', { ascending: false }),
         ])
@@ -91,13 +91,12 @@ function MainApp() {
         setSalvando(true)
         setErro(null)
         const { data, error: saveError } = await supabase
-            .from('mensagens')
-            .insert({ convidado_id: convidado.id, mensagem: mensagemNova.trim() })
-            .select('id, mensagem, created_at, convidado_id, convidado:convidados(nome)')
+            .rpc('criar_mensagem', { p_mensagem: mensagemNova.trim() })
             .single()
         if (saveError) setErro(saveError.message)
         else {
-            setMensagens((atuais) => [data as Mensagem, ...atuais])
+            const mensagemSalva = data as Omit<Mensagem, 'convidado'>
+            setMensagens((atuais) => [{ ...mensagemSalva, convidado: { nome: convidado.nome } }, ...atuais])
             setMensagemNova('')
         }
         setSalvando(false)
@@ -143,7 +142,10 @@ function MainApp() {
                         <button className="button button-primary" type="submit" disabled={salvando || !mensagemNova.trim()}>{salvando ? 'Enviando...' : 'Publicar mensagem'}</button>
                     </form>
                     <div className="message-list">
-                        {mensagens.map((item) => <article className="message-item" key={item.id}><p>{item.mensagem}</p><span>{item.convidado?.[0]?.nome ?? 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span></article>)}
+                        {mensagens.map((item) => {
+                            const convidadoNome = Array.isArray(item.convidado) ? item.convidado[0]?.nome : item.convidado?.nome
+                            return <article className="message-item" key={item.id}><p>{item.mensagem}</p><span>{convidadoNome ?? 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span></article>
+                        })}
                         {!mensagens.length && <p className="empty-state">Ainda não há mensagens. Seja o primeiro a escrever.</p>}
                     </div>
                 </div>
