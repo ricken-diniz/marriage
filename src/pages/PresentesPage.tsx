@@ -9,11 +9,19 @@ type Presente = {
   valor: number
   valor_cota: number
   imagem_url: string | null
+  visivel: boolean
 }
 
 type Contribuicao = {
   id: string
   presente_id: string
+  confirmado: boolean
+}
+
+type ContribuicaoLivre = {
+  id: string
+  valor_cota: number
+  confirmado: boolean
 }
 
 type PresentesPageProps = {
@@ -27,8 +35,12 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [convidadoId, setConvidadoId] = useState<string | null>(null)
   const [presentes, setPresentes] = useState<Presente[]>([])
   const [contribuicoes, setContribuicoes] = useState<Contribuicao[]>([])
+  const [contribuicoesLivres, setContribuicoesLivres] = useState<ContribuicaoLivre[]>([])
   const [presenteModal, setPresenteModal] = useState<Presente | null>(null)
+  const [presenteRemocaoModal, setPresenteRemocaoModal] = useState<Presente | null>(null)
+  const [contribuicaoLivreRemocaoModal, setContribuicaoLivreRemocaoModal] = useState<ContribuicaoLivre | null>(null)
   const [quantidadeModal, setQuantidadeModal] = useState(1)
+  const [quantidadeRemocao, setQuantidadeRemocao] = useState(1)
   const [modalLivre, setModalLivre] = useState(false)
   const [valorLivre, setValorLivre] = useState('')
   const [carregando, setCarregando] = useState(true)
@@ -40,7 +52,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     async function carregarDados() {
       const [convidadoResult, presentesResult] = await Promise.all([
         supabase.from('convidados').select('id').limit(1).maybeSingle(),
-        supabase.from('presentes').select('id, nome, descricao, valor, valor_cota, imagem_url').order('nome'),
+        supabase.from('presentes').select('id, nome, descricao, valor, valor_cota, imagem_url, visivel').order('nome'),
       ])
 
       if (convidadoResult.error || presentesResult.error) {
@@ -49,12 +61,22 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
         setConvidadoId(convidadoResult.data?.id ?? null)
         setPresentes((presentesResult.data ?? []) as Presente[])
         if (convidadoResult.data?.id) {
-          const contribuicoesResult = await supabase
-            .from('contribuicoes')
-            .select('id, presente_id')
-            .eq('convidado_id', convidadoResult.data.id)
-          if (contribuicoesResult.error) setErro(contribuicoesResult.error.message)
-          else setContribuicoes((contribuicoesResult.data ?? []) as Contribuicao[])
+          const [contribuicoesResult, livresResult] = await Promise.all([
+            supabase
+              .from('contribuicoes')
+              .select('id, presente_id, confirmado')
+              .eq('convidado_id', convidadoResult.data.id),
+            supabase
+              .from('contribuicoes_livres')
+              .select('id, valor_cota, confirmado')
+              .eq('convidado_id', convidadoResult.data.id)
+              .order('created_at', { ascending: false }),
+          ])
+          if (contribuicoesResult.error || livresResult.error) setErro((contribuicoesResult.error ?? livresResult.error)?.message ?? 'Não foi possível carregar suas contribuições.')
+          else {
+            setContribuicoes((contribuicoesResult.data ?? []) as Contribuicao[])
+            setContribuicoesLivres((livresResult.data ?? []) as ContribuicaoLivre[])
+          }
         }
       }
       setCarregando(false)
@@ -65,9 +87,12 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
   function fecharModal() {
     setPresenteModal(null)
+    setPresenteRemocaoModal(null)
+    setContribuicaoLivreRemocaoModal(null)
     setModalLivre(false)
     setValorLivre('')
     setQuantidadeModal(1)
+    setQuantidadeRemocao(1)
   }
 
   function abrirPresente(presente: Presente) {
@@ -80,17 +105,25 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
   async function salvarQuantidade(quantidade: number) {
     if (!convidadoId || !presenteModal) return
-    setSalvando(true)
-    setErro(null)
     const atuais = contribuicoes.filter((item) => item.presente_id === presenteModal.id)
     const diferenca = quantidade - atuais.length
+    if (diferenca < 0) {
+      setErro('Para remover cotas, use o botão "Remover cotas".')
+      return
+    }
+    if (!presenteModal.visivel && diferenca > 0) {
+      setErro('Este presente não está mais recebendo novas cotas.')
+      return
+    }
+    setSalvando(true)
+    setErro(null)
     let saveError: { message: string } | null = null
     let novasContribuicoes: Contribuicao[] = []
 
     if (diferenca > 0) {
       const { data, error } = await supabase.from('contribuicoes').insert(
         Array.from({ length: diferenca }, () => ({ presente_id: presenteModal.id, convidado_id: convidadoId })),
-      ).select('id, presente_id')
+      ).select('id, presente_id, confirmado')
       saveError = error
       novasContribuicoes = (data ?? []) as Contribuicao[]
     } else if (diferenca < 0) {
@@ -128,9 +161,15 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     await salvarQuantidade(quantidadeTotal)
   }
 
-  async function removerContribuicoes(presenteId: string) {
-    const ids = contribuicoes.filter((item) => item.presente_id === presenteId).map((item) => item.id)
-    if (!ids.length) return
+  async function removerContribuicoes(presenteId: string, quantidade: number) {
+    const ids = contribuicoes
+      .filter((item) => item.presente_id === presenteId && !item.confirmado)
+      .slice(0, quantidade)
+      .map((item) => item.id)
+    if (!Number.isInteger(quantidade) || quantidade < 1 || !ids.length || ids.length !== quantidade) {
+      setErro('Informe uma quantidade válida de cotas não confirmadas.')
+      return
+    }
     setSalvando(true)
     setErro(null)
     const { error: deleteError } = await supabase.from('contribuicoes').delete().in('id', ids)
@@ -138,6 +177,21 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     else {
       setContribuicoes((atuais) => atuais.filter((item) => !ids.includes(item.id)))
       setMensagem('Suas cotas foram removidas.')
+      setPresenteRemocaoModal(null)
+    }
+    setSalvando(false)
+  }
+
+  async function removerContribuicaoLivre(contribuicao: ContribuicaoLivre) {
+    if (contribuicao.confirmado) return
+    setSalvando(true)
+    setErro(null)
+    const { error: deleteError } = await supabase.from('contribuicoes_livres').delete().eq('id', contribuicao.id)
+    if (deleteError) setErro(deleteError.message)
+    else {
+      setContribuicoesLivres((atuais) => atuais.filter((item) => item.id !== contribuicao.id))
+      setMensagem('Sua contribuição livre foi removida.')
+      setContribuicaoLivreRemocaoModal(null)
     }
     setSalvando(false)
   }
@@ -153,9 +207,14 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
     setSalvando(true)
     setErro(null)
-    const { error: saveError } = await supabase.from('contribuicoes_livres').insert({ convidado_id: convidadoId, valor_cota: valor })
+    const { data, error: saveError } = await supabase
+      .from('contribuicoes_livres')
+      .insert({ convidado_id: convidadoId, valor_cota: valor })
+      .select('id, valor_cota, confirmado')
+      .single()
     if (saveError) setErro(saveError.message)
     else {
+      setContribuicoesLivres((atuais) => [data as ContribuicaoLivre, ...atuais])
       setMensagem('Sua contribuição foi registrada com carinho.')
       fecharModal()
     }
@@ -184,26 +243,32 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
         </div>
         <div className="guest-gifts">
           {presentes.map((presente) => {
+            const jaEscolhido = contribuicoes.some((item) => item.presente_id === presente.id)
+            if (!presente.visivel && !jaEscolhido) return null
             return <article className="guest-gift" key={presente.id}>
               {presente.imagem_url ? <img src={presente.imagem_url} alt="" /> : <div className="gift-placeholder">P</div>}
               <div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div>
-              <button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>Ver presente</button>
+              <button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button>
             </article>
           })}
         </div>
       </section>
 
       <section className="guest-section">
-        <div className="guest-section-heading"><div><span className="admin-kicker">Suas escolhas</span><h2>Presentes que você escolheu</h2></div><span>{contribuicoes.length} presentes</span></div>
+        <div className="guest-section-heading"><div><span className="admin-kicker">Suas escolhas</span><h2>Presentes que você escolheu</h2></div><span>{contribuicoes.length + contribuicoesLivres.length} contribuições</span></div>
         <div className="my-contributions">
           {contribuicoes.map((contribuicao) => {
             const presente = presentes.find((item) => item.id === contribuicao.presente_id)
             if (!presente) return null
-            const quantidade = contribuicoes.filter((item) => item.presente_id === presente.id).length
+            const contribuicoesDoPresente = contribuicoes.filter((item) => item.presente_id === presente.id)
+            const quantidade = contribuicoesDoPresente.length
+            const cotasNaoConfirmadas = contribuicoesDoPresente.filter((item) => !item.confirmado).length
+            const cotasConfirmadas = quantidade - cotasNaoConfirmadas
             if (contribuicao.id !== contribuicoes.find((item) => item.presente_id === presente.id)?.id) return null
-            return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}</span></div><button type="button" disabled={salvando} onClick={() => void removerContribuicoes(presente.id)}>Remover cotas</button></article>
+            return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}{cotasConfirmadas ? ` · ${cotasConfirmadas} confirmada${cotasConfirmadas === 1 ? '' : 's'}` : ''}</span></div>{cotasNaoConfirmadas ? <button type="button" disabled={salvando} onClick={() => { setPresenteRemocaoModal(presente); setQuantidadeRemocao(1); setErro(null) }}>Remover cotas</button> : <span className="confirmed-contribution-label">Cotas confirmadas</span>}</article>
           })}
-          {!contribuicoes.length && <p className="empty-state">Você ainda não escolheu nenhum presente.</p>}
+          {contribuicoesLivres.map((contribuicao) => <article className="my-contribution" key={contribuicao.id}><div><strong>Contribuição livre</strong><span>{moeda.format(contribuicao.valor_cota)}{contribuicao.confirmado ? ' · Confirmada' : ' · Aguardando confirmação'}</span></div>{contribuicao.confirmado ? <span className="confirmed-contribution-label">Valor confirmado</span> : <button type="button" disabled={salvando} onClick={() => { setContribuicaoLivreRemocaoModal(contribuicao); setErro(null) }}>Remover contribuição</button>}</article>)}
+          {!contribuicoes.length && !contribuicoesLivres.length && <p className="empty-state">Você ainda não escolheu nenhum presente.</p>}
         </div>
       </section>
 
@@ -217,6 +282,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
           <button className="modal-close" type="button" aria-label="Fechar" onClick={fecharModal}>×</button>
           {presenteModal ? <>
             <span className="admin-kicker">Sua escolha</span>
+            {presenteModal.imagem_url ? <img className="gift-modal-image" src={presenteModal.imagem_url} alt={`Foto de ${presenteModal.nome}`} /> : <div className="gift-modal-placeholder" aria-hidden="true">P</div>}
             <h2 id="modal-title">{presenteModal.nome}</h2>
             {presenteModal.descricao && <p>{presenteModal.descricao}</p>}
             <p>Uma cota custa {moeda.format(presenteModal.valor_cota)}. O valor total deste presente é {moeda.format(presenteModal.valor)}.</p>
@@ -233,6 +299,40 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
               <button className="button button-primary modal-action" type="submit" disabled={salvando || !valorLivre.trim()}>{salvando ? 'Registrando...' : 'Confirmar contribuição'}</button>
             </form>
           </>}
+        </section>
+      </div>}
+
+      {presenteRemocaoModal && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) fecharModal() }}>
+        <section className="contribution-modal" role="dialog" aria-modal="true" aria-labelledby="remocao-title">
+          <button className="modal-close" type="button" aria-label="Fechar" onClick={fecharModal}>×</button>
+          <span className="admin-kicker">Remover cotas</span>
+          <h2 id="remocao-title">{presenteRemocaoModal.nome}</h2>
+          <p>Escolha quantas cotas não confirmadas deseja remover. Cotas já confirmadas não podem ser removidas.</p>
+          <label className="quantity-label" htmlFor="quantidade-remocao">Quantidade de cotas</label>
+          <input
+            id="quantidade-remocao"
+            className="quantity-input"
+            type="number"
+            min="1"
+            max={contribuicoes.filter((item) => item.presente_id === presenteRemocaoModal.id && !item.confirmado).length}
+            step="1"
+            value={quantidadeRemocao}
+            onChange={(event) => setQuantidadeRemocao(Number(event.target.value))}
+          />
+          <button className="button button-primary modal-action" type="button" disabled={salvando} onClick={() => void removerContribuicoes(presenteRemocaoModal.id, quantidadeRemocao)}>{salvando ? 'Removendo...' : 'Remover cotas selecionadas'}</button>
+        </section>
+      </div>}
+
+      {contribuicaoLivreRemocaoModal && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !salvando) setContribuicaoLivreRemocaoModal(null) }}>
+        <section className="contribution-modal delete-confirmation-modal" role="dialog" aria-modal="true" aria-labelledby="free-contribution-delete-title">
+          <div className="delete-confirmation-icon" aria-hidden="true">!</div>
+          <span className="admin-kicker">Remover contribuição</span>
+          <h2 id="free-contribution-delete-title">Remover esta contribuição livre?</h2>
+          <p>O valor de {moeda.format(contribuicaoLivreRemocaoModal.valor_cota)} será retirado das suas escolhas. Essa ação não poderá ser desfeita.</p>
+          <div className="delete-confirmation-actions">
+            <button className="button button-quiet" type="button" disabled={salvando} onClick={() => setContribuicaoLivreRemocaoModal(null)}>Cancelar</button>
+            <button className="button button-danger" type="button" disabled={salvando} onClick={() => void removerContribuicaoLivre(contribuicaoLivreRemocaoModal)}>{salvando ? 'Removendo...' : 'Remover contribuição'}</button>
+          </div>
         </section>
       </div>}
     </main>
