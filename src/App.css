@@ -496,6 +496,40 @@
   font-size: 0.76rem;
 }
 
+.message-item-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.message-item-footer span {
+  min-width: 0;
+}
+
+.message-delete-button {
+  flex: 0 0 auto;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 999px;
+  color: #9c422e;
+  background: #fff0e9;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.message-admin-row {
+  align-items: flex-start;
+}
+
+.message-admin-row p {
+  max-width: 680px;
+  margin-top: 8px;
+  color: var(--ink);
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
 .home-side-actions {
   display: grid;
   align-content: start;

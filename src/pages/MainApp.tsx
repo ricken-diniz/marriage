@@ -102,6 +102,20 @@ function MainApp() {
         setSalvando(false)
     }
 
+    async function excluirMensagem(id: string) {
+        if (!convidado) return
+        setSalvando(true)
+        setErro(null)
+        const { error: deleteError } = await supabase
+            .from('mensagens')
+            .delete()
+            .eq('id', id)
+            .eq('convidado_id', convidado.id)
+        if (deleteError) setErro(deleteError.message)
+        else setMensagens((atuais) => atuais.filter((item) => item.id !== id))
+        setSalvando(false)
+    }
+
     async function sair() {
         await supabase.auth.signOut()
     }
@@ -144,7 +158,7 @@ function MainApp() {
                     <div className="message-list">
                         {mensagens.map((item) => {
                             const convidadoNome = Array.isArray(item.convidado) ? item.convidado[0]?.nome : item.convidado?.nome
-                            return <article className="message-item" key={item.id}><p>{item.mensagem}</p><span>{convidadoNome ?? 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span></article>
+                            return <article className="message-item" key={item.id}><p>{item.mensagem}</p><div className="message-item-footer"><span>{convidadoNome ?? 'Convidado'} · {new Date(item.created_at).toLocaleDateString('pt-BR')}</span>{item.convidado_id === convidado?.id && <button className="message-delete-button" type="button" disabled={salvando} onClick={() => void excluirMensagem(item.id)}>Excluir</button>}</div></article>
                         })}
                         {!mensagens.length && <p className="empty-state">Ainda não há mensagens. Seja o primeiro a escrever.</p>}
                     </div>

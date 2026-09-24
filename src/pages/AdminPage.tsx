@@ -3,7 +3,7 @@ import { supabase } from '../lib/supabaseClient'
 import { alterarCodigoConvidado, criarConvidado, verCodigoConvidado } from '../api/auth'
 import '../App.css'
 
-type Tab = 'convidados' | 'companhias' | 'presentes' | 'contribuicoes'
+type Tab = 'convidados' | 'companhias' | 'presentes' | 'contribuicoes' | 'mensagens'
 
 type Convidado = {
   id: string
@@ -44,8 +44,15 @@ type ContribuicaoLivre = {
   created_at: string
 }
 
+type Mensagem = {
+  id: string
+  mensagem: string
+  created_at: string
+  convidado: { nome: string }[] | { nome: string } | null
+}
+
 type ExclusaoPendente = {
-  tabela: 'convidados' | 'companhias' | 'presentes'
+  tabela: 'convidados' | 'companhias' | 'presentes' | 'mensagens'
   id: string
   nome: string
   tipo: string
@@ -63,6 +70,7 @@ function AdminPage() {
   const [presentes, setPresentes] = useState<Presente[]>([])
   const [contribuicoes, setContribuicoes] = useState<Contribuicao[]>([])
   const [contribuicoesLivres, setContribuicoesLivres] = useState<ContribuicaoLivre[]>([])
+  const [mensagens, setMensagens] = useState<Mensagem[]>([])
   const [convidadoContribuicoes, setConvidadoContribuicoes] = useState<string | null>(null)
   const [convidadoEditando, setConvidadoEditando] = useState<string | null>(null)
   const [companhiaEditando, setCompanhiaEditando] = useState<string | null>(null)
@@ -85,7 +93,7 @@ function AdminPage() {
   const [erro, setErro] = useState<string | null>(null)
 
   async function carregarDados() {
-    const [convidadosResult, companhiasResult, presentesResult, contribuicoesResult, livresResult] = await Promise.all([
+    const [convidadosResult, companhiasResult, presentesResult, contribuicoesResult, livresResult, mensagensResult] = await Promise.all([
       supabase
         .from('convidados')
         .select('id, nome, confirmacao_presenca')
@@ -106,9 +114,13 @@ function AdminPage() {
         .from('contribuicoes_livres')
         .select('id, convidado_id, valor_cota, confirmado, created_at')
         .order('created_at', { ascending: false }),
+      supabase
+        .from('mensagens')
+        .select('id, mensagem, created_at, convidado:convidados(nome)')
+        .order('created_at', { ascending: false }),
     ])
 
-    const resultadoComErro = [convidadosResult, companhiasResult, presentesResult, contribuicoesResult, livresResult].find(
+    const resultadoComErro = [convidadosResult, companhiasResult, presentesResult, contribuicoesResult, livresResult, mensagensResult].find(
       (resultado) => resultado.error,
     )
 
@@ -120,6 +132,7 @@ function AdminPage() {
       setPresentes((presentesResult.data ?? []) as Presente[])
       setContribuicoes((contribuicoesResult.data ?? []) as Contribuicao[])
       setContribuicoesLivres((livresResult.data ?? []) as ContribuicaoLivre[])
+      setMensagens((mensagensResult.data ?? []) as Mensagem[])
     }
 
     setCarregando(false)
@@ -372,6 +385,9 @@ function AdminPage() {
         <button className={aba === 'contribuicoes' ? 'active' : ''} type="button" onClick={() => setAba('contribuicoes')}>
           Confirmações <span>{convidados.length + companhias.length}</span>
         </button>
+        <button className={aba === 'mensagens' ? 'active' : ''} type="button" onClick={() => setAba('mensagens')}>
+          Mensagens <span>{mensagens.length}</span>
+        </button>
       </nav>
 
       {erro && <div className="admin-alert">{erro}</div>}
@@ -496,6 +512,23 @@ function AdminPage() {
                   </button>
                 })}
                 {!convidados.length && <p className="empty-state">Nenhum convidado cadastrado.</p>}
+              </div>
+            </section>
+          )}
+
+          {aba === 'mensagens' && (
+            <section className="messages-admin-section">
+              <div className="section-intro">
+                <span className="admin-kicker">Mural</span>
+                <h2>Mensagens dos convidados</h2>
+                <p>Consulte e remova mensagens publicadas no mural da celebração.</p>
+              </div>
+              <div className="admin-list">
+                {mensagens.map((item) => {
+                  const nome = Array.isArray(item.convidado) ? item.convidado[0]?.nome : item.convidado?.nome
+                  return <article className="admin-row message-admin-row" key={item.id}><div><strong>{nome ?? 'Convidado'}</strong><p>{item.mensagem}</p><span>{new Date(item.created_at).toLocaleDateString('pt-BR')}</span></div><div className="row-actions"><button type="button" onClick={() => solicitarExclusao('mensagens', item.id, nome ?? 'mensagem', 'mensagem')}>Excluir</button></div></article>
+                })}
+                {!mensagens.length && <p className="empty-state">Nenhuma mensagem publicada.</p>}
               </div>
             </section>
           )}

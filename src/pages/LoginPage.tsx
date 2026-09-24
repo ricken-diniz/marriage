@@ -33,7 +33,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
         <h1>Que bom ter você com a gente.</h1>
         <p>Este espaço foi preparado para guardar cada detalhe de uma celebração muito especial.</p>
         <div className="story-line" aria-hidden="true" />
-        <span className="story-note">Com carinho, Marina &amp; João</span>
+        <span className="story-note">Com carinho, Jéssica &amp; Nathan</span>
       </section>
 
       <section className="login-panel">
