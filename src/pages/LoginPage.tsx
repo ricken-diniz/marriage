@@ -40,7 +40,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
         <form onSubmit={handleSubmit} className="codigo-form">
           <span className="login-eyebrow">Acesso reservado</span>
           <h2>Entre com seu código</h2>
-          <p>Use o código que recebemos especialmente para você.</p>
+          <p>Use o código que enviamos especialmente para você.</p>
 
           <label htmlFor="codigo">Código do convite</label>
           <input
