@@ -28,7 +28,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
   return (
     <div className="login-page">
       <section className="login-story" aria-label="Boas-vindas">
-        <div className="monogram" aria-hidden="true">M</div>
+        <div className="monogram" aria-hidden="true">JN</div>
         <span className="login-eyebrow">Nosso dia</span>
         <h1>Que bom ter você com a gente.</h1>
         <p>Este espaço foi preparado para guardar cada detalhe de uma celebração muito especial.</p>
