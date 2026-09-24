@@ -812,6 +812,7 @@
   display: grid;
   padding: 24px;
   place-items: center;
+  overflow-y: auto;
   background: rgba(18, 69, 59, 0.42);
 }
 
@@ -822,6 +823,8 @@
   border: 1px solid var(--line);
   background: var(--paper);
   box-shadow: 0 24px 70px rgba(18, 69, 59, 0.22);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
 }
 
 .contribution-modal h2 {
