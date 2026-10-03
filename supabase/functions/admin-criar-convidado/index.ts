@@ -50,9 +50,10 @@ Deno.serve(async (request) => {
   let authUserId: string | null = null
 
   try {
-    const { nome, code } = await request.json()
+    const { nome, code, telefone } = await request.json()
     const nomeNormalizado = typeof nome === 'string' ? nome.trim() : ''
     const codigoNormalizado = typeof code === 'string' ? code.trim() : ''
+    const telefoneNormalizado = typeof telefone === 'string' && telefone.trim() ? telefone.trim() : null
 
     if (!nomeNormalizado || codigoNormalizado.length < 6) {
       return response({ error: 'Nome obrigatório e código com pelo menos 6 caracteres.' }, 400)
@@ -81,7 +82,7 @@ Deno.serve(async (request) => {
 
     const { data: guest, error: guestError } = await admin
       .from('convidados')
-      .insert({ nome: nomeNormalizado })
+      .insert({ nome: nomeNormalizado, telefone: telefoneNormalizado })
       .select('id')
       .single()
 

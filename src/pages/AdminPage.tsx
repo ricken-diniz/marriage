@@ -8,7 +8,10 @@ type Tab = 'convidados' | 'companhias' | 'presentes' | 'contribuicoes' | 'mensag
 type Convidado = {
   id: string
   nome: string
+  telefone: string | null
   confirmacao_presenca: boolean | null
+  recebeu_pre_convite: boolean
+  recebeu_convite: boolean
 }
 
 type Companhia = {
@@ -78,7 +81,10 @@ function AdminPage() {
   const [presenteSelecionado, setPresenteSelecionado] = useState<Presente | null>(null)
   const [exclusaoPendente, setExclusaoPendente] = useState<ExclusaoPendente | null>(null)
   const [nomeConvidado, setNomeConvidado] = useState('')
+  const [telefoneConvidado, setTelefoneConvidado] = useState('')
   const [codigoConvidado, setCodigoConvidado] = useState('')
+  const [recebeuPreConvite, setRecebeuPreConvite] = useState(false)
+  const [recebeuConvite, setRecebeuConvite] = useState(false)
   const [nomeCompanhia, setNomeCompanhia] = useState('')
   const [convidadoDaCompanhia, setConvidadoDaCompanhia] = useState('')
   const [nomePresente, setNomePresente] = useState('')
@@ -95,7 +101,7 @@ function AdminPage() {
     const [convidadosResult, companhiasResult, presentesResult, contribuicoesResult, livresResult, mensagensResult] = await Promise.all([
       supabase
         .from('convidados')
-        .select('id, nome, confirmacao_presenca')
+        .select('id, nome, telefone, confirmacao_presenca, recebeu_pre_convite, recebeu_convite')
         .order('nome'),
       supabase
         .from('companhias')
@@ -163,7 +169,10 @@ function AdminPage() {
     setPresenteEditando(null)
     setPresenteSelecionado(null)
     setNomeConvidado('')
+    setTelefoneConvidado('')
     setCodigoConvidado('')
+    setRecebeuPreConvite(false)
+    setRecebeuConvite(false)
     setNomeCompanhia('')
     setConvidadoDaCompanhia('')
     setNomePresente('')
@@ -185,7 +194,12 @@ function AdminPage() {
     if (convidadoEditando) {
       const result = await supabase
         .from('convidados')
-        .update({ nome: nomeConvidado.trim() })
+        .update({
+          nome: nomeConvidado.trim(),
+          telefone: telefoneConvidado.trim() || null,
+          recebeu_pre_convite: recebeuPreConvite,
+          recebeu_convite: recebeuConvite,
+        })
         .eq('id', convidadoEditando)
       saveError = result.error
 
@@ -200,7 +214,7 @@ function AdminPage() {
       saveError = { message: 'O código precisa ter pelo menos 6 caracteres.' }
     } else {
       try {
-        await criarConvidado(nomeConvidado.trim(), codigoConvidado.trim())
+        await criarConvidado(nomeConvidado.trim(), codigoConvidado.trim(), telefoneConvidado.trim() || null)
       } catch (error) {
         saveError = error instanceof Error ? error : { message: 'Não foi possível criar o convidado.' }
       }
@@ -317,6 +331,20 @@ function AdminPage() {
     setSalvando(false)
   }
 
+  async function alternarStatusConvite(convidado: Convidado, campo: 'recebeu_pre_convite' | 'recebeu_convite') {
+    const valor = !convidado[campo]
+    setSalvando(true)
+    setErro(null)
+    const { error: saveError } = await supabase
+      .from('convidados')
+      .update({ [campo]: valor })
+      .eq('id', convidado.id)
+
+    if (saveError) setErro(saveError.message)
+    else setConvidados((atuais) => atuais.map((atual) => atual.id === convidado.id ? { ...atual, [campo]: valor } : atual))
+    setSalvando(false)
+  }
+
   function nomeDoConvidado(id: string) {
     return convidados.find((convidado) => convidado.id === id)?.nome ?? 'Convidado não encontrado'
   }
@@ -329,6 +357,9 @@ function AdminPage() {
     setAba('convidados')
     setConvidadoEditando(convidado.id)
     setNomeConvidado(convidado.nome)
+    setTelefoneConvidado(convidado.telefone ?? '')
+    setRecebeuPreConvite(convidado.recebeu_pre_convite)
+    setRecebeuConvite(convidado.recebeu_convite)
     levarAoFormulario('form-convidado')
   }
 
@@ -396,6 +427,8 @@ function AdminPage() {
                   <p>Crie o convidado e defina o código que será entregue presencialmente.</p>
                 </div>
                 <label>Nome<input value={nomeConvidado} onChange={(event) => setNomeConvidado(event.target.value)} placeholder="Ex.: Jéssica e Nathan" /></label>
+                <label>Telefone<input type="tel" value={telefoneConvidado} onChange={(event) => setTelefoneConvidado(event.target.value)} placeholder="Ex.: (11) 99999-9999" /></label>
+                {convidadoEditando && <div className="guest-status-fields"><label className="checkbox-label"><input type="checkbox" checked={recebeuPreConvite} onChange={(event) => setRecebeuPreConvite(event.target.checked)} />Recebeu pré-convite</label><label className="checkbox-label"><input type="checkbox" checked={recebeuConvite} onChange={(event) => setRecebeuConvite(event.target.checked)} />Recebeu convite</label></div>}
                 {!convidadoEditando && <label>Código de acesso<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Ex.: CASAMENTO2026" minLength={6} required /><small className="field-help">O código será a senha de acesso do convidado. Anote-o para entregar presencialmente.</small></label>}
                 {convidadoEditando && <label>Novo código de acesso (opcional)<input value={codigoConvidado} onChange={(event) => setCodigoConvidado(event.target.value)} placeholder="Deixe vazio para manter o atual" minLength={6} /><small className="field-help">O código atual aparece na listagem. Informe um novo código para substituí-lo.</small></label>}
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : convidadoEditando ? 'Salvar alterações' : 'Adicionar'}</button>{convidadoEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>
@@ -403,7 +436,7 @@ function AdminPage() {
               <section className="cadastro-list-panel">
                 <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Convidados cadastrados</h2></div><span>{convidados.length} itens</span></div>
                 <div className="admin-list">
-                  {convidados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
+                  {convidados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.telefone ? `Telefone: ${convidado.telefone}` : 'Telefone não informado'}</span><div className="guest-status-actions"><button className={`guest-status-button${convidado.recebeu_pre_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_pre_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_pre_convite')}>Pré-convite</button><button className={`guest-status-button${convidado.recebeu_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_convite')}>Convite</button></div><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
                   {!convidados.length && <p className="empty-state">Nenhum convidado cadastrado.</p>}
                 </div>
               </section>

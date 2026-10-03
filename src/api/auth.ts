@@ -26,9 +26,9 @@ export async function validarCodigo(code: string) {
   return sessionData.session
 }
 
-export async function criarConvidado(nome: string, code: string) {
+export async function criarConvidado(nome: string, code: string, telefone: string | null) {
   const { data, error } = await supabase.functions.invoke('admin-criar-convidado', {
-    body: { nome, code },
+    body: { nome, code, telefone },
   })
   if (error) throw error
   return data
