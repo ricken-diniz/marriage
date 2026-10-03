@@ -201,6 +201,59 @@ button:disabled {
   font-size: 0.8rem;
 }
 
+.list-search {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.list-search-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(145px, 0.35fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.list-filter {
+  display: grid;
+  gap: 7px;
+  color: var(--ink);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.list-search input {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  outline: 0;
+  color: var(--ink);
+  background: #f7fbff;
+}
+
+.list-search input:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(30, 91, 79, 0.12);
+}
+
+.list-filter select {
+  width: 100%;
+  padding: 11px 13px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  outline: 0;
+  color: var(--ink);
+  background: #f7fbff;
+}
+
+.list-filter select:focus {
+  border-color: var(--sage);
+  box-shadow: 0 0 0 3px rgba(30, 91, 79, 0.12);
+}
+
 .gift-list-item {
   display: flex;
   align-items: center;

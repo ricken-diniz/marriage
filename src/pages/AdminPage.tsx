@@ -4,6 +4,8 @@ import { alterarCodigoConvidado, criarConvidado, verCodigoConvidado } from '../a
 import '../App.css'
 
 type Tab = 'convidados' | 'companhias' | 'presentes' | 'contribuicoes' | 'mensagens'
+type FiltroTelefone = 'todos' | 'com-numero' | 'sem-numero'
+type FiltroStatusConvite = 'todos' | 'recebido' | 'pendente'
 
 type Convidado = {
   id: string
@@ -85,6 +87,11 @@ function AdminPage() {
   const [codigoConvidado, setCodigoConvidado] = useState('')
   const [recebeuPreConvite, setRecebeuPreConvite] = useState(false)
   const [recebeuConvite, setRecebeuConvite] = useState(false)
+  const [buscaConvidado, setBuscaConvidado] = useState('')
+  const [filtroTelefone, setFiltroTelefone] = useState<FiltroTelefone>('todos')
+  const [filtroPreConvite, setFiltroPreConvite] = useState<FiltroStatusConvite>('todos')
+  const [filtroConvite, setFiltroConvite] = useState<FiltroStatusConvite>('todos')
+  const [buscaCompanhia, setBuscaCompanhia] = useState('')
   const [nomeCompanhia, setNomeCompanhia] = useState('')
   const [convidadoDaCompanhia, setConvidadoDaCompanhia] = useState('')
   const [nomePresente, setNomePresente] = useState('')
@@ -349,6 +356,35 @@ function AdminPage() {
     return convidados.find((convidado) => convidado.id === id)?.nome ?? 'Convidado não encontrado'
   }
 
+  function textoNormalizado(texto: string) {
+    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
+  }
+
+  function somenteNumeros(texto: string) {
+    return texto.replace(/\D/g, '')
+  }
+
+  const convidadosFiltrados = convidados.filter((convidado) => {
+    const buscaNormalizada = textoNormalizado(buscaConvidado)
+    const telefoneBuscado = somenteNumeros(buscaConvidado)
+    const correspondeAoTexto = textoNormalizado(convidado.nome).includes(buscaNormalizada)
+      || (telefoneBuscado.length > 0 && somenteNumeros(convidado.telefone ?? '').includes(telefoneBuscado))
+    const correspondeAoTelefone = filtroTelefone === 'todos'
+      || (filtroTelefone === 'com-numero' && Boolean(convidado.telefone))
+      || (filtroTelefone === 'sem-numero' && !convidado.telefone)
+    const correspondeAoPreConvite = filtroPreConvite === 'todos'
+      || (filtroPreConvite === 'recebido' && convidado.recebeu_pre_convite)
+      || (filtroPreConvite === 'pendente' && !convidado.recebeu_pre_convite)
+    const correspondeAoConvite = filtroConvite === 'todos'
+      || (filtroConvite === 'recebido' && convidado.recebeu_convite)
+      || (filtroConvite === 'pendente' && !convidado.recebeu_convite)
+    return correspondeAoTexto && correspondeAoTelefone && correspondeAoPreConvite && correspondeAoConvite
+  })
+  const companhiasFiltradas = companhias.filter((companhia) => {
+    const busca = textoNormalizado(buscaCompanhia)
+    return textoNormalizado(companhia.nome).includes(busca) || textoNormalizado(nomeDoConvidado(companhia.convidado_id)).includes(busca)
+  })
+
   function levarAoFormulario(id: string) {
     requestAnimationFrame(() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }
@@ -434,10 +470,11 @@ function AdminPage() {
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : convidadoEditando ? 'Salvar alterações' : 'Adicionar'}</button>{convidadoEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>
               </form>
               <section className="cadastro-list-panel">
-                <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Convidados cadastrados</h2></div><span>{convidados.length} itens</span></div>
+                <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Convidados cadastrados</h2></div><span>{convidadosFiltrados.length} de {convidados.length} itens</span></div>
+                <div className="list-search-controls"><label className="list-search"><span>Pesquisar convidados</span><input type="search" value={buscaConvidado} onChange={(event) => setBuscaConvidado(event.target.value)} placeholder="Nome ou número de telefone" /></label><label className="list-filter"><span>Telefone</span><select value={filtroTelefone} onChange={(event) => setFiltroTelefone(event.target.value as FiltroTelefone)}><option value="todos">Todos</option><option value="com-numero">Com número cadastrado</option><option value="sem-numero">Sem número cadastrado</option></select></label><label className="list-filter"><span>Pré-convite</span><select value={filtroPreConvite} onChange={(event) => setFiltroPreConvite(event.target.value as FiltroStatusConvite)}><option value="todos">Todos</option><option value="recebido">Recebido</option><option value="pendente">Pendente</option></select></label><label className="list-filter"><span>Convite</span><select value={filtroConvite} onChange={(event) => setFiltroConvite(event.target.value as FiltroStatusConvite)}><option value="todos">Todos</option><option value="recebido">Recebido</option><option value="pendente">Pendente</option></select></label></div>
                 <div className="admin-list">
-                  {convidados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.telefone ? `Telefone: ${convidado.telefone}` : 'Telefone não informado'}</span><div className="guest-status-actions"><button className={`guest-status-button${convidado.recebeu_pre_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_pre_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_pre_convite')}>Pré-convite</button><button className={`guest-status-button${convidado.recebeu_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_convite')}>Convite</button></div><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
-                  {!convidados.length && <p className="empty-state">Nenhum convidado cadastrado.</p>}
+                  {convidadosFiltrados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.telefone ? `Telefone: ${convidado.telefone}` : 'Telefone não informado'}</span><div className="guest-status-actions"><button className={`guest-status-button${convidado.recebeu_pre_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_pre_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_pre_convite')}>Pré-convite</button><button className={`guest-status-button${convidado.recebeu_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_convite')}>Convite</button></div><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
+                  {!convidadosFiltrados.length && <p className="empty-state">{convidados.length ? 'Nenhum convidado encontrado.' : 'Nenhum convidado cadastrado.'}</p>}
                 </div>
               </section>
             </div>
@@ -452,10 +489,11 @@ function AdminPage() {
                 <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : companhiaEditando ? 'Salvar alterações' : 'Adicionar'}</button>{companhiaEditando && <button className="button button-quiet" type="button" onClick={limparFormularios}>Cancelar</button>}</div>
               </form>
               <section className="cadastro-list-panel">
-                <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Companhias cadastradas</h2></div><span>{companhias.length} itens</span></div>
+                <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Companhias cadastradas</h2></div><span>{companhiasFiltradas.length} de {companhias.length} itens</span></div>
+                <label className="list-search"><span>Pesquisar companhias</span><input type="search" value={buscaCompanhia} onChange={(event) => setBuscaCompanhia(event.target.value)} placeholder="Nome da companhia ou convidado" /></label>
                 <div className="admin-list">
-                  {companhias.map((companhia) => <article className="admin-row" key={companhia.id}><div><strong>{companhia.nome}</strong><span>Com {nomeDoConvidado(companhia.convidado_id)}</span></div><div className="row-actions"><button type="button" onClick={() => editarCompanhia(companhia)}>Editar</button><button type="button" onClick={() => solicitarExclusao('companhias', companhia.id, companhia.nome, 'companhia')}>Excluir</button></div></article>)}
-                  {!companhias.length && <p className="empty-state">Nenhuma companhia cadastrada.</p>}
+                  {companhiasFiltradas.map((companhia) => <article className="admin-row" key={companhia.id}><div><strong>{companhia.nome}</strong><span>Com {nomeDoConvidado(companhia.convidado_id)}</span></div><div className="row-actions"><button type="button" onClick={() => editarCompanhia(companhia)}>Editar</button><button type="button" onClick={() => solicitarExclusao('companhias', companhia.id, companhia.nome, 'companhia')}>Excluir</button></div></article>)}
+                  {!companhiasFiltradas.length && <p className="empty-state">{companhias.length ? 'Nenhuma companhia encontrada.' : 'Nenhuma companhia cadastrada.'}</p>}
                 </div>
               </section>
             </div>
