@@ -193,7 +193,7 @@ function MainApp() {
                 </div>
 
                 <aside className="home-side-actions">
-                    <button className="home-navigation-button" type="button" onClick={() => setPagina('presentes')}><span><small>Lista de presentes</small><strong>Escolha uma cota</strong></span><b aria-hidden="true">→</b></button>
+                    <button className="home-navigation-button" type="button" onClick={() => setPagina('presentes')}><span><small>Lista de presentes</small><strong>Escolha como nos abençoar</strong></span><b aria-hidden="true">→</b></button>
                     <button className="home-navigation-button" type="button" onClick={() => setModalCompanhias(true)}><span><small>Seu convite</small><strong>Ver companhias ({companhias.length})</strong></span><b aria-hidden="true">+</b></button>
                 </aside>
             </section>

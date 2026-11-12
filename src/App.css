@@ -992,6 +992,25 @@ button:disabled {
   font-weight: 700;
 }
 
+.my-contribution-actions {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.my-contribution .pay-contributions-button {
+  color: var(--ink);
+  background: var(--lime);
+}
+
+.my-contribution .pay-contributions-button:hover {
+  color: var(--paper);
+  background: var(--sage-dark);
+}
+
 .confirmed-contribution-label {
   flex: 0 0 auto;
   color: var(--muted);
@@ -1019,6 +1038,116 @@ button:disabled {
   box-shadow: 0 24px 70px rgba(18, 69, 59, 0.22);
   max-height: calc(100vh - 48px);
   overflow-y: auto;
+}
+
+.gift-purchase-confirmation {
+  width: min(100%, 560px);
+  padding: 42px clamp(26px, 6vw, 56px);
+  border: 0;
+  background: var(--lime);
+  box-shadow: 0 24px 70px rgba(0, 0, 128, 0.24);
+  text-align: center;
+}
+
+.gift-purchase-confirmation .modal-close {
+  color: var(--ink);
+}
+
+.gift-purchase-confirmation-mark {
+  display: grid;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 22px;
+  place-items: center;
+  border: 1px solid rgba(0, 0, 128, 0.24);
+  border-radius: 50%;
+  color: var(--ink);
+  font-size: 1.6rem;
+}
+
+.gift-purchase-confirmation .admin-kicker {
+  color: var(--ink);
+}
+
+.gift-purchase-confirmation h2 {
+  max-width: none;
+  margin-top: 12px;
+  margin-right: auto;
+  margin-left: auto;
+  font-size: clamp(2.1rem, 5vw, 3.4rem);
+  line-height: 0.98;
+  text-align: center;
+}
+
+.gift-purchase-confirmation-message {
+  max-width: 430px;
+  margin: 22px auto 0;
+  color: rgba(0, 0, 128, 0.78) !important;
+  font-size: 1rem;
+  line-height: 1.65 !important;
+}
+
+.gift-purchase-summary {
+  margin-top: 22px !important;
+  color: var(--ink) !important;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.gift-purchase-confirmation-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.gift-purchase-confirmation-actions .button {
+  min-width: 180px;
+}
+
+.gift-purchase-confirmation-actions .button-primary {
+  color: var(--paper);
+  background: var(--sage-dark);
+}
+
+.gift-purchase-confirmation-actions .button-primary:hover {
+  color: var(--paper);
+  background: var(--ink);
+}
+
+.gift-purchase-confirmation-actions .button-quiet {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.gift-purchase-confirmation-actions .button-quiet:hover {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.gift-payment-modal {
+  width: min(100%, 560px);
+}
+
+.gift-payment-modal h2 {
+  max-width: 470px;
+}
+
+.gift-payment-modal > p {
+  margin-top: 18px;
+}
+
+.gift-payment-options {
+  display: grid;
+  gap: 14px;
+  margin: 22px 0 0;
+  padding: 0 0 0 20px;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.gift-payment-options strong {
+  color: var(--ink);
 }
 
 .contribution-modal h2 {

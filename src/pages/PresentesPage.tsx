@@ -37,6 +37,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [contribuicoes, setContribuicoes] = useState<Contribuicao[]>([])
   const [contribuicoesLivres, setContribuicoesLivres] = useState<ContribuicaoLivre[]>([])
   const [presenteModal, setPresenteModal] = useState<Presente | null>(null)
+  const [pagamentoCotasModal, setPagamentoCotasModal] = useState<{ presente: Presente; quantidade: number } | null>(null)
+  const [confirmacaoCompra, setConfirmacaoCompra] = useState<{ presente: Presente; quantidade: number } | null>(null)
   const [presenteRemocaoModal, setPresenteRemocaoModal] = useState<Presente | null>(null)
   const [contribuicaoLivreRemocaoModal, setContribuicaoLivreRemocaoModal] = useState<ContribuicaoLivre | null>(null)
   const [quantidadeModal, setQuantidadeModal] = useState(1)
@@ -89,6 +91,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
   function fecharModal() {
     setPresenteModal(null)
+    setPagamentoCotasModal(null)
+    setConfirmacaoCompra(null)
     setPresenteRemocaoModal(null)
     setContribuicaoLivreRemocaoModal(null)
     setModalLivre(false)
@@ -105,21 +109,26 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     setErro(null)
   }
 
+  function abrirPagamentoCotas(presente: Presente, quantidade: number) {
+    setPagamentoCotasModal({ presente, quantidade })
+    setErro(null)
+  }
+
   function textoNormalizado(texto: string) {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
   }
 
-  async function salvarQuantidade(quantidade: number) {
-    if (!convidadoId || !presenteModal) return
-    const atuais = contribuicoes.filter((item) => item.presente_id === presenteModal.id)
+  async function salvarQuantidade(presente: Presente, quantidade: number) {
+    if (!convidadoId) return false
+    const atuais = contribuicoes.filter((item) => item.presente_id === presente.id)
     const diferenca = quantidade - atuais.length
     if (diferenca < 0) {
       setErro('Para remover cotas, use o botão "Remover cotas".')
-      return
+      return false
     }
-    if (!presenteModal.visivel && diferenca > 0) {
+    if (!presente.visivel && diferenca > 0) {
       setErro('Este presente não está mais recebendo novas cotas.')
-      return
+      return false
     }
     setSalvando(true)
     setErro(null)
@@ -128,7 +137,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
     if (diferenca > 0) {
       const { data, error } = await supabase.from('contribuicoes').insert(
-        Array.from({ length: diferenca }, () => ({ presente_id: presenteModal.id, convidado_id: convidadoId })),
+        Array.from({ length: diferenca }, () => ({ presente_id: presente.id, convidado_id: convidadoId })),
       ).select('id, presente_id, confirmado')
       saveError = error
       novasContribuicoes = (data ?? []) as Contribuicao[]
@@ -138,33 +147,45 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
       saveError = result.error
     }
 
-    if (saveError) setErro(saveError.message)
-    else {
+    if (saveError) {
+      setErro(saveError.message)
+    } else {
       const idsRemovidos = diferenca < 0 ? atuais.slice(0, Math.abs(diferenca)).map((item) => item.id) : []
       setContribuicoes((todos) => [
         ...todos.filter((item) => !idsRemovidos.includes(item.id)),
         ...novasContribuicoes,
       ])
       setMensagem('Suas cotas foram registradas com carinho.')
-      fecharModal()
+      setPresenteModal(null)
+      setQuantidadeModal(1)
     }
     setSalvando(false)
+    return !saveError
   }
 
   async function escolherPresente() {
+    if (!presenteModal) return
     const quantidade = Math.floor(Number(quantidadeModal))
     if (!Number.isFinite(quantidade) || quantidade < 1) {
       setErro('Informe pelo menos uma cota.')
       return
     }
-    await salvarQuantidade(quantidade)
+    const salvou = await salvarQuantidade(presenteModal, quantidade)
+    if (salvou) abrirPagamentoCotas(presenteModal, quantidade)
   }
 
   async function comprarPresenteTodo() {
     if (!presenteModal) return
     const quantidadeTotal = Math.ceil(presenteModal.valor / presenteModal.valor_cota)
     setQuantidadeModal(quantidadeTotal)
-    await salvarQuantidade(quantidadeTotal)
+    const salvou = await salvarQuantidade(presenteModal, quantidadeTotal)
+    if (salvou) abrirPagamentoCotas(presenteModal, quantidadeTotal)
+  }
+
+  function confirmarPagamento() {
+    if (!pagamentoCotasModal) return
+    setPagamentoCotasModal(null)
+    setConfirmacaoCompra(pagamentoCotasModal)
   }
 
   async function removerContribuicoes(presenteId: string, quantidade: number) {
@@ -249,7 +270,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
       <section className="guest-section">
         <div className="guest-section-heading">
-          <div><span className="admin-kicker">Lista de presentes</span><h2>Escolha uma cota</h2></div>
+          <div><span className="admin-kicker">Lista de presentes</span><h2>Escolha como nos abençoar</h2></div>
           <span>{presentesVisiveis.length} opções</span>
         </div>
         <label className="list-search guest-gift-search"><span>Pesquisar presentes</span><input type="search" aria-label="Pesquisar presentes por nome" value={buscaPresente} onChange={(event) => setBuscaPresente(event.target.value)} placeholder="Nome do presente" /></label>
@@ -275,7 +296,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
             const cotasNaoConfirmadas = contribuicoesDoPresente.filter((item) => !item.confirmado).length
             const cotasConfirmadas = quantidade - cotasNaoConfirmadas
             if (contribuicao.id !== contribuicoes.find((item) => item.presente_id === presente.id)?.id) return null
-            return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}{cotasConfirmadas ? ` · ${cotasConfirmadas} confirmada${cotasConfirmadas === 1 ? '' : 's'}` : ''}</span></div>{cotasNaoConfirmadas ? <button type="button" disabled={salvando} onClick={() => { setPresenteRemocaoModal(presente); setQuantidadeRemocao(1); setErro(null) }}>Remover cotas</button> : <span className="confirmed-contribution-label">Cotas confirmadas</span>}</article>
+            return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}{cotasConfirmadas ? ` · ${cotasConfirmadas} confirmada${cotasConfirmadas === 1 ? '' : 's'}` : ''}</span></div><div className="my-contribution-actions"><button className="pay-contributions-button" type="button" disabled={salvando} onClick={() => abrirPagamentoCotas(presente, quantidade)}>Pagar as cotas</button>{cotasNaoConfirmadas ? <button type="button" disabled={salvando} onClick={() => { setPresenteRemocaoModal(presente); setQuantidadeRemocao(1); setErro(null) }}>Remover cotas</button> : <span className="confirmed-contribution-label">Cotas confirmadas</span>}</div></article>
           })}
           {contribuicoesLivres.map((contribuicao) => <article className="my-contribution" key={contribuicao.id}><div><strong>Contribuição livre</strong><span>{moeda.format(contribuicao.valor_cota)}{contribuicao.confirmado ? ' · Confirmada' : ' · Aguardando confirmação'}</span></div>{contribuicao.confirmado ? <span className="confirmed-contribution-label">Valor confirmado</span> : <button type="button" disabled={salvando} onClick={() => { setContribuicaoLivreRemocaoModal(contribuicao); setErro(null) }}>Remover contribuição</button>}</article>)}
           {!contribuicoes.length && !contribuicoesLivres.length && <p className="empty-state">Seu carrinho de carinho está vazio por enquanto.</p>}
@@ -309,6 +330,35 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
               <button className="button button-primary modal-action" type="submit" disabled={salvando || !valorLivre.trim()}>{salvando ? 'Registrando...' : 'Confirmar contribuição'}</button>
             </form>
           </>}
+        </section>
+      </div>}
+
+      {pagamentoCotasModal && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !salvando) fecharModal() }}>
+        <section className="contribution-modal gift-payment-modal" role="dialog" aria-modal="true" aria-labelledby="gift-payment-title">
+          <button className="modal-close" type="button" aria-label="Fechar" disabled={salvando} onClick={fecharModal}>×</button>
+          <span className="admin-kicker">Pagamento das cotas</span>
+          <h2 id="gift-payment-title">Que bom que você pretende participar da nossa história!</h2>
+          <p>Para isso, esses são os meios de pagamento das cotas:</p>
+          <ul className="gift-payment-options">
+            <li>Envie um pix no valor total de <strong>{moeda.format(pagamentoCotasModal.quantidade * pagamentoCotasModal.presente.valor_cota)}</strong> para a chave <strong>84999372625</strong> no nome de Jéssica Letícia.</li>
+            <li>Caso esteja comprando o presente por conta própria, você pode levá-lo no casamento ou entregar aos noivos entrando em contato!</li>
+            <li>Caso queira pagar com crédito, entre em contato com Jéssica por meio do contato: <strong>84999372625</strong>.</li>
+          </ul>
+          <button className="button button-primary modal-action" type="button" onClick={confirmarPagamento}>OK, entendi!</button>
+        </section>
+      </div>}
+
+      {confirmacaoCompra && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !salvando) fecharModal() }}>
+        <section className="contribution-modal gift-purchase-confirmation" role="dialog" aria-modal="true" aria-labelledby="purchase-confirmation-title">
+          <button className="modal-close" type="button" aria-label="Fechar" disabled={salvando} onClick={fecharModal}>×</button>
+          <div className="gift-purchase-confirmation-mark" aria-hidden="true">♥</div>
+          <span className="admin-kicker">Um gesto muito especial</span>
+          <h2 id="purchase-confirmation-title">Obrigado pelo carinho!</h2>
+          <p className="gift-purchase-confirmation-message">Muito obrigado(a) pelo carinho!<br />Seu presente já faz parte do nosso sonho e do início da nossa vida juntos. Saber que temos o seu apoio deixa tudo ainda mais especial. Mal podemos esperar para te dar um abraço bem apertado no nosso grande dia!</p>
+          <p className="gift-purchase-summary">{confirmacaoCompra.quantidade} {confirmacaoCompra.quantidade === 1 ? 'cota' : 'cotas'} de {confirmacaoCompra.presente.nome}</p>
+          <div className="gift-purchase-confirmation-actions">
+            <button className="button button-primary" type="button" onClick={fecharModal}>Voltar</button>
+          </div>
         </section>
       </div>}
 
