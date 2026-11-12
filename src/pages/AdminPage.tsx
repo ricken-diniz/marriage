@@ -263,7 +263,7 @@ function AdminPage() {
   async function salvarPresente(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const valor = Number(valorPresente.replace(',', '.'))
-    const valorCota = Number(valorCotaPresente.replace(',', '.'))
+    const valorCota = valorCotaPresente.trim() ? Number(valorCotaPresente.replace(',', '.')) : valor
     if (!nomePresente.trim() || !Number.isFinite(valor) || valor < 0 || !Number.isFinite(valorCota) || valorCota <= 0) return
 
     setSalvando(true)
@@ -520,8 +520,9 @@ function AdminPage() {
                   <input inputMode="decimal" value={valorPresente} onChange={(event) => setValorPresente(event.target.value)} placeholder="0,00" />
                 </label>
                 <label>
-                  Valor da cota
+                  Valor da cota (opcional)
                   <input inputMode="decimal" value={valorCotaPresente} onChange={(event) => setValorCotaPresente(event.target.value)} placeholder="0,00" />
+                  <small className="field-help">Deixe vazio para usar o valor total como uma única cota.</small>
                 </label>
                 <label>
                   URL da imagem
@@ -609,7 +610,7 @@ function AdminPage() {
               <label>Nome<input value={nomePresente} onChange={(event) => setNomePresente(event.target.value)} /></label>
               <label>Descrição<textarea value={descricaoPresente} onChange={(event) => setDescricaoPresente(event.target.value)} rows={3} /></label>
               <label>Valor total<input inputMode="decimal" value={valorPresente} onChange={(event) => setValorPresente(event.target.value)} /></label>
-              <label>Valor da cota<input inputMode="decimal" value={valorCotaPresente} onChange={(event) => setValorCotaPresente(event.target.value)} /></label>
+              <label>Valor da cota (opcional)<input inputMode="decimal" value={valorCotaPresente} onChange={(event) => setValorCotaPresente(event.target.value)} /><small className="field-help">Deixe vazio para usar o valor total como uma única cota.</small></label>
               <label>URL da imagem<input type="url" value={imagemPresente} onChange={(event) => setImagemPresente(event.target.value)} /></label>
               <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar alterações'}</button><button className="button button-quiet" type="button" onClick={() => setPresenteEditando(null)}>Cancelar</button></div>
             </form>
