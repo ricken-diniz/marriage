@@ -392,10 +392,16 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 20px;
   min-height: 78px;
   padding: 16px 18px;
   border-bottom: 1px solid var(--line);
+}
+
+.admin-row > div:first-child {
+  min-width: 0;
+  flex: 1 1 220px;
 }
 
 .admin-row strong,
@@ -449,7 +455,9 @@ button:disabled {
 
 .row-actions {
   display: flex;
-  flex: 0 0 auto;
+  flex: 1 1 180px;
+  justify-content: flex-end;
+  min-width: 0;
   max-width: 100%;
   flex-wrap: wrap;
   gap: 6px;
@@ -457,6 +465,7 @@ button:disabled {
 
 .row-actions button {
   min-width: 0;
+  max-width: 100%;
   padding: 7px 11px;
   color: var(--sage-dark);
   background: #e3eff8;
@@ -1646,15 +1655,25 @@ button:disabled {
   .admin-row {
     align-items: flex-start;
     flex-direction: column;
+    justify-content: flex-start;
     gap: 12px;
   }
 
+  .admin-row > div:first-child {
+    width: 100%;
+    flex: 0 1 auto;
+  }
+
   .row-actions {
+    display: flex;
+    flex: 0 1 auto;
+    justify-content: flex-start;
     width: 100%;
   }
 
   .row-actions button {
-    flex: 1 1 120px;
+    width: auto;
+    flex: 0 1 auto;
   }
 }
 
