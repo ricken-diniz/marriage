@@ -6,6 +6,7 @@ import '../App.css'
 type Tab = 'convidados' | 'companhias' | 'presentes' | 'contribuicoes' | 'mensagens'
 type FiltroTelefone = 'todos' | 'com-numero' | 'sem-numero'
 type FiltroStatusConvite = 'todos' | 'recebido' | 'pendente'
+type TipoBuscaConfirmacoes = 'nome' | 'abaixo' | 'acima'
 
 type Convidado = {
   id: string
@@ -96,6 +97,9 @@ function AdminPage() {
   const [filtroPreConvite, setFiltroPreConvite] = useState<FiltroStatusConvite>('todos')
   const [filtroConvite, setFiltroConvite] = useState<FiltroStatusConvite>('todos')
   const [buscaCompanhia, setBuscaCompanhia] = useState('')
+  const [buscaPresente, setBuscaPresente] = useState('')
+  const [buscaConfirmacoes, setBuscaConfirmacoes] = useState('')
+  const [tipoBuscaConfirmacoes, setTipoBuscaConfirmacoes] = useState<TipoBuscaConfirmacoes>('nome')
   const [nomeCompanhia, setNomeCompanhia] = useState('')
   const [convidadoDaCompanhia, setConvidadoDaCompanhia] = useState('')
   const [nomePresente, setNomePresente] = useState('')
@@ -449,6 +453,13 @@ function AdminPage() {
     return convidados.find((convidado) => convidado.id === id)?.nome ?? 'Convidado não encontrado'
   }
 
+  function valorDasContribuicoes(convidadoId: string) {
+    const cotas = contribuicoes.filter((item) => item.convidado_id === convidadoId)
+    const livres = contribuicoesLivres.filter((item) => item.convidado_id === convidadoId)
+    return cotas.reduce((total, item) => total + (presentes.find((presente) => presente.id === item.presente_id)?.valor_cota ?? 0), 0)
+      + livres.reduce((total, item) => total + item.valor_cota, 0)
+  }
+
   function textoNormalizado(texto: string) {
     return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
   }
@@ -476,6 +487,16 @@ function AdminPage() {
   const companhiasFiltradas = companhias.filter((companhia) => {
     const busca = textoNormalizado(buscaCompanhia)
     return textoNormalizado(companhia.nome).includes(busca) || textoNormalizado(nomeDoConvidado(companhia.convidado_id)).includes(busca)
+  })
+  const presentesFiltrados = presentes.filter((presente) => textoNormalizado(presente.nome).includes(textoNormalizado(buscaPresente)))
+  const convidadosComContribuicoes = convidados.filter((convidado) => {
+    if (!buscaConfirmacoes.trim()) return true
+    if (tipoBuscaConfirmacoes === 'nome') return textoNormalizado(convidado.nome).includes(textoNormalizado(buscaConfirmacoes))
+
+    const valorBusca = Number(buscaConfirmacoes.replace(',', '.'))
+    if (!Number.isFinite(valorBusca)) return false
+    const valorContribuicoes = valorDasContribuicoes(convidado.id)
+    return tipoBuscaConfirmacoes === 'abaixo' ? valorContribuicoes < valorBusca : valorContribuicoes > valorBusca
   })
 
   function levarAoFormulario(id: string) {
@@ -639,10 +660,11 @@ function AdminPage() {
               <section className="presentes-list-panel">
                 <div className="presentes-list-heading">
                   <div><span className="admin-kicker">Catálogo</span><h2>Presentes cadastrados</h2></div>
-                  <span>{presentes.length} itens</span>
+                  <span>{presentesFiltrados.length} de {presentes.length} itens</span>
                 </div>
+                <label className="list-search"><span>Pesquisar presentes</span><input type="search" value={buscaPresente} onChange={(event) => setBuscaPresente(event.target.value)} placeholder="Nome do presente" /></label>
                 <div className="admin-list">
-                  {presentes.map((presente) => (
+                  {presentesFiltrados.map((presente) => (
                     <article className="admin-row" key={presente.id}>
                       <div className="gift-list-item">
                         {presente.imagem_url ? <img src={presente.imagem_url} alt={`Foto de ${presente.nome}`} /> : <div className="gift-placeholder" aria-hidden="true">P</div>}
@@ -656,7 +678,7 @@ function AdminPage() {
                       </div>
                     </article>
                   ))}
-                  {!presentes.length && <p className="empty-state">Nenhum presente cadastrado.</p>}
+                  {!presentesFiltrados.length && <p className="empty-state">{presentes.length ? 'Nenhum presente encontrado.' : 'Nenhum presente cadastrado.'}</p>}
                 </div>
               </section>
             </div>
@@ -670,16 +692,20 @@ function AdminPage() {
                 <h2>Confirme o que já chegou</h2>
                 <p>Escolha um convidado para conferir cada contribuição e marcar manualmente os valores recebidos.</p>
               </div>
+              <div className="confirmation-search-controls">
+                <label className="list-search"><span>Pesquisar confirmações</span><input type={tipoBuscaConfirmacoes === 'nome' ? 'search' : 'number'} inputMode={tipoBuscaConfirmacoes === 'nome' ? 'text' : 'decimal'} min={tipoBuscaConfirmacoes === 'nome' ? undefined : '0'} step={tipoBuscaConfirmacoes === 'nome' ? undefined : '0.01'} value={buscaConfirmacoes} onChange={(event) => setBuscaConfirmacoes(event.target.value)} placeholder={tipoBuscaConfirmacoes === 'nome' ? 'Nome do convidado' : 'Valor em reais'} /></label>
+                <label className="list-filter"><span>Pesquisar por</span><select value={tipoBuscaConfirmacoes} onChange={(event) => { setTipoBuscaConfirmacoes(event.target.value as TipoBuscaConfirmacoes); setBuscaConfirmacoes('') }}><option value="nome">Nome</option><option value="abaixo">Valores abaixo de</option><option value="acima">Valores acima de</option></select></label>
+              </div>
               <div className="admin-list">
-                {convidados.map((convidado) => {
+                {convidadosComContribuicoes.map((convidado) => {
                   const cotas = contribuicoes.filter((item) => item.convidado_id === convidado.id)
                   const livres = contribuicoesLivres.filter((item) => item.convidado_id === convidado.id)
                   return <button className="admin-row confirmation-row" type="button" key={convidado.id} onClick={() => setConvidadoContribuicoes(convidado.id)}>
                     <span><strong>{convidado.nome}</strong><span>{cotas.length + livres.length} {cotas.length + livres.length === 1 ? 'contribuição' : 'contribuições'}</span></span>
-                    <span className="confirmation-summary">{moeda.format(cotas.reduce((total, item) => total + (presentes.find((presente) => presente.id === item.presente_id)?.valor_cota ?? 0), 0) + livres.reduce((total, item) => total + item.valor_cota, 0))} <b>→</b></span>
+                    <span className="confirmation-summary">{moeda.format(valorDasContribuicoes(convidado.id))} <b>→</b></span>
                   </button>
                 })}
-                {!convidados.length && <p className="empty-state">Nenhum convidado cadastrado.</p>}
+                {!convidadosComContribuicoes.length && <p className="empty-state">{convidados.length ? 'Nenhum convidado encontrado.' : 'Nenhum convidado cadastrado.'}</p>}
               </div>
             </section>
           )}
@@ -778,6 +804,8 @@ type PresenceConfirmationTablesProps = {
 }
 
 function PresenceConfirmationTables({ convidados, companhias, nomeDoConvidado }: PresenceConfirmationTablesProps) {
+  const [buscaConfirmados, setBuscaConfirmados] = useState('')
+  const [buscaNaoConfirmados, setBuscaNaoConfirmados] = useState('')
   const confirmados = [
     ...convidados.filter((convidado) => convidado.confirmacao_presenca === true).map((convidado) => ({ nome: convidado.nome, tipo: 'Convidado' })),
     ...companhias.filter((companhia) => companhia.confirmacao_presenca === true).map((companhia) => ({ nome: companhia.nome, tipo: `Companhia de ${nomeDoConvidado(companhia.convidado_id)}` })),
@@ -787,13 +815,17 @@ function PresenceConfirmationTables({ convidados, companhias, nomeDoConvidado }:
     ...companhias.filter((companhia) => companhia.confirmacao_presenca !== true).map((companhia) => ({ nome: companhia.nome, tipo: `Companhia de ${nomeDoConvidado(companhia.convidado_id)}` })),
   ]
 
-  function tabela(titulo: string, pessoas: { nome: string; tipo: string }[]) {
+  function tabela(titulo: string, pessoas: { nome: string; tipo: string }[], busca: string, alterarBusca: (valor: string) => void) {
+    const buscaNormalizada = busca.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
+    const pessoasFiltradas = pessoas.filter((pessoa) => pessoa.nome.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase().includes(buscaNormalizada))
+
     return <div className="presence-table-block">
-      <div className="presence-table-heading"><h2>{titulo}</h2><span>{pessoas.length}</span></div>
+      <div className="presence-table-heading"><h2>{titulo}</h2><span>{pessoasFiltradas.length}</span></div>
+      <label className="list-search presence-table-search"><input type="search" aria-label={`Pesquisar ${titulo.toLocaleLowerCase()} por nome`} value={busca} onChange={(event) => alterarBusca(event.target.value)} placeholder="Nome da pessoa" /></label>
       <div className="presence-table" role="table" aria-label={titulo}>
         <div className="presence-table-row presence-table-header" role="row"><span role="columnheader">Nome</span><span role="columnheader">Tipo</span></div>
-        {pessoas.map((pessoa) => <div className="presence-table-row" role="row" key={`${pessoa.tipo}-${pessoa.nome}`}><strong role="cell">{pessoa.nome}</strong><span role="cell">{pessoa.tipo}</span></div>)}
-        {!pessoas.length && <p className="empty-state">Nenhuma pessoa nesta tabela.</p>}
+        {pessoasFiltradas.map((pessoa) => <div className="presence-table-row" role="row" key={`${pessoa.tipo}-${pessoa.nome}`}><strong role="cell">{pessoa.nome}</strong><span role="cell">{pessoa.tipo}</span></div>)}
+        {!pessoasFiltradas.length && <p className="empty-state">{pessoas.length ? 'Nenhuma pessoa encontrada.' : 'Nenhuma pessoa nesta tabela.'}</p>}
       </div>
     </div>
   }
@@ -805,8 +837,8 @@ function PresenceConfirmationTables({ convidados, companhias, nomeDoConvidado }:
       <p>Confira quem já respondeu ao convite e quem ainda não confirmou.</p>
     </div>
     <div className="presence-tables">
-      {tabela('Confirmados', confirmados)}
-      {tabela('Não confirmados', naoConfirmados)}
+      {tabela('Confirmados', confirmados, buscaConfirmados, setBuscaConfirmados)}
+      {tabela('Não confirmados', naoConfirmados, buscaNaoConfirmados, setBuscaNaoConfirmados)}
     </div>
   </section>
 }

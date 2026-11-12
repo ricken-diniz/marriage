@@ -834,6 +834,10 @@ button:disabled {
   font-size: 0.82rem;
 }
 
+.guest-gift-search {
+  margin-bottom: 16px;
+}
+
 .guest-gifts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1107,6 +1111,13 @@ button:disabled {
   max-width: 760px;
 }
 
+.confirmation-search-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.4fr);
+  gap: 12px;
+  margin: 24px 0 18px;
+}
+
 .presence-confirmation-section {
   margin-bottom: 56px;
 }
@@ -1150,6 +1161,10 @@ button:disabled {
   background: var(--lime);
   font-size: 0.76rem;
   font-weight: 700;
+}
+
+.presence-table-search {
+  margin: 16px 18px 18px;
 }
 
 .presence-table-row {
@@ -1484,6 +1499,10 @@ button:disabled {
   }
 
   .presence-tables {
+    grid-template-columns: 1fr;
+  }
+
+  .confirmation-search-controls {
     grid-template-columns: 1fr;
   }
 

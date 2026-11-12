@@ -47,6 +47,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [salvando, setSalvando] = useState(false)
   const [mensagem, setMensagem] = useState<string | null>(null)
   const [erro, setErro] = useState<string | null>(null)
+  const [buscaPresente, setBuscaPresente] = useState('')
 
   useEffect(() => {
     async function carregarDados() {
@@ -102,6 +103,10 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     setQuantidadeModal(quantidade || 1)
     setMensagem(null)
     setErro(null)
+  }
+
+  function textoNormalizado(texto: string) {
+    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase()
   }
 
   async function salvarQuantidade(quantidade: number) {
@@ -224,6 +229,11 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
 
   if (carregando) return <main className="guest-shell"><p className="guest-status">Carregando sua lista...</p></main>
 
+  const presentesVisiveis = presentes.filter((presente) => {
+    const jaEscolhido = contribuicoes.some((item) => item.presente_id === presente.id)
+    return (presente.visivel || jaEscolhido) && textoNormalizado(presente.nome).includes(textoNormalizado(buscaPresente))
+  })
+
   return (
     <main className="guest-shell">
       <header className="guest-header guest-header-with-actions">
@@ -240,17 +250,17 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
       <section className="guest-section">
         <div className="guest-section-heading">
           <div><span className="admin-kicker">Lista de presentes</span><h2>Escolha uma cota</h2></div>
-          <span>{presentes.length} opções</span>
+          <span>{presentesVisiveis.length} opções</span>
         </div>
+        <label className="list-search guest-gift-search"><span>Pesquisar presentes</span><input type="search" aria-label="Pesquisar presentes por nome" value={buscaPresente} onChange={(event) => setBuscaPresente(event.target.value)} placeholder="Nome do presente" /></label>
         <div className="guest-gifts">
-          {presentes.map((presente) => {
-            const jaEscolhido = contribuicoes.some((item) => item.presente_id === presente.id)
-            if (!presente.visivel && !jaEscolhido) return null
+          {presentesVisiveis.map((presente) => {
             return <article className="guest-gift" key={presente.id}>
               {presente.imagem_url ? <img src={presente.imagem_url} alt="" /> : <div className="gift-placeholder">P</div>}
               <div className="guest-gift-details"><div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div><button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button></div>
             </article>
           })}
+          {!presentesVisiveis.length && <p className="empty-state">Nenhum presente encontrado.</p>}
         </div>
       </section>
 
@@ -268,13 +278,13 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
             return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}{cotasConfirmadas ? ` · ${cotasConfirmadas} confirmada${cotasConfirmadas === 1 ? '' : 's'}` : ''}</span></div>{cotasNaoConfirmadas ? <button type="button" disabled={salvando} onClick={() => { setPresenteRemocaoModal(presente); setQuantidadeRemocao(1); setErro(null) }}>Remover cotas</button> : <span className="confirmed-contribution-label">Cotas confirmadas</span>}</article>
           })}
           {contribuicoesLivres.map((contribuicao) => <article className="my-contribution" key={contribuicao.id}><div><strong>Contribuição livre</strong><span>{moeda.format(contribuicao.valor_cota)}{contribuicao.confirmado ? ' · Confirmada' : ' · Aguardando confirmação'}</span></div>{contribuicao.confirmado ? <span className="confirmed-contribution-label">Valor confirmado</span> : <button type="button" disabled={salvando} onClick={() => { setContribuicaoLivreRemocaoModal(contribuicao); setErro(null) }}>Remover contribuição</button>}</article>)}
-          {!contribuicoes.length && !contribuicoesLivres.length && <p className="empty-state">Você ainda não escolheu nenhum presente.</p>}
+          {!contribuicoes.length && !contribuicoesLivres.length && <p className="empty-state">Seu carrinho de carinho está vazio por enquanto.</p>}
         </div>
       </section>
 
       <section className="guest-section guest-free-form">
-        <div><span className="admin-kicker">Contribuição livre</span><h2>Prefere escolher seu próprio valor?</h2><p>Todo gesto ajuda a construir este novo capítulo.</p></div>
-        <button className="button button-primary" type="button" onClick={() => { setModalLivre(true); setMensagem(null); setErro(null) }}>Informar valor</button>
+        <div><span className="admin-kicker">Contribuição livre</span><h2>Quer presentear com outro valor?</h2><p>Se preferir definir o valor da sua contribuição com toda a liberdade, fique super à vontade. Cada gesto de carinho é especial para nós!</p></div>
+        <button className="button button-primary" type="button" onClick={() => { setModalLivre(true); setMensagem(null); setErro(null) }}>Escolher meu valor</button>
       </section>
 
       {(presenteModal || modalLivre) && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) fecharModal() }}>
