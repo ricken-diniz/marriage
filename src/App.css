@@ -212,9 +212,13 @@ button:disabled {
 
 .list-search-controls {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) repeat(3, minmax(145px, 0.35fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
   margin-bottom: 18px;
+}
+
+.list-search-controls .list-search {
+  grid-column: 1 / -1;
 }
 
 .list-filter {
@@ -1625,6 +1629,10 @@ button:disabled {
   .cadastro-admin-layout {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .list-search-controls {
+    grid-template-columns: 1fr;
   }
 
   .presence-tables {
