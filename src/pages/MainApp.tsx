@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import PresentesPage from './PresentesPage'
 import '../App.css'
@@ -23,6 +23,11 @@ type Mensagem = {
     convidado: { nome: string } | { nome: string }[] | null
 }
 
+type NotificacaoPresenca = {
+    tipo: 'confirmada' | 'recusada'
+    texto: string
+}
+
 function MainApp() {
     const [pagina, setPagina] = useState<'inicio' | 'presentes'>('inicio')
     const [convidado, setConvidado] = useState<Convidado | null>(null)
@@ -33,6 +38,8 @@ function MainApp() {
     const [carregando, setCarregando] = useState(true)
     const [salvando, setSalvando] = useState(false)
     const [erro, setErro] = useState<string | null>(null)
+    const [notificacaoPresenca, setNotificacaoPresenca] = useState<NotificacaoPresenca | null>(null)
+    const notificacaoTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     async function carregarDados() {
         const [convidadoResult, companhiasResult, mensagensResult] = await Promise.all([
@@ -60,6 +67,24 @@ function MainApp() {
         void carregarInicialmente()
     }, [])
 
+    useEffect(() => () => {
+        if (notificacaoTimer.current) clearTimeout(notificacaoTimer.current)
+    }, [])
+
+    function mostrarNotificacaoPresenca(confirmacao: boolean) {
+        if (notificacaoTimer.current) clearTimeout(notificacaoTimer.current)
+        setNotificacaoPresenca({
+            tipo: confirmacao ? 'confirmada' : 'recusada',
+            texto: confirmacao
+                ? 'Eba! Nosso dia acaba de ficar ainda mais feliz com a sua presença, estamos contando os dias para nos encontrarmos'
+                : 'Sentiremos sua falta no altar, mas você com certeza estará em nosso coração. Sabemos que estará torcendo por nós',
+        })
+        notificacaoTimer.current = setTimeout(() => {
+            setNotificacaoPresenca(null)
+            notificacaoTimer.current = null
+        }, 8000)
+    }
+
     async function confirmarPresenca(confirmacao: boolean) {
         if (!convidado) return
         setSalvando(true)
@@ -69,7 +94,10 @@ function MainApp() {
             .update({ confirmacao_presenca: confirmacao })
             .eq('id', convidado.id)
         if (saveError) setErro(saveError.message)
-        else setConvidado({ ...convidado, confirmacao_presenca: confirmacao })
+        else {
+            setConvidado({ ...convidado, confirmacao_presenca: confirmacao })
+            mostrarNotificacaoPresenca(confirmacao)
+        }
         setSalvando(false)
     }
 
@@ -130,20 +158,20 @@ function MainApp() {
         <main className="guest-shell">
             <header className="guest-header home-header">
                 <div>
-                    <span className="admin-kicker">Nosso dia</span>
                     <h1>Que alegria ter você com a gente, {convidado?.nome}.</h1>
-                    <p>Este é o cantinho da nossa celebração. Confirme sua presença, deixe uma mensagem e participe da nossa lista de presentes.</p>
+                    <p>Preparamos tudo com muito carinho, e pensamentos em cada detalhe, para celebrar o amor ao lado de quem realmente importa. Venha viver conosco um pedaço desse sonho!</p>
                 </div>
                 <button className="button button-quiet" type="button" onClick={() => void sair()}>Sair</button>
             </header>
 
             {erro && <div className="guest-alert" role="alert">{erro}</div>}
+            {notificacaoPresenca && <div className={`presence-notification ${notificacaoPresenca.tipo}`} role="status" aria-live="polite">{notificacaoPresenca.texto}</div>}
 
             <section className="home-actions" aria-label="Ações do convite">
                 <div className="home-action-copy"><span className="admin-kicker">Presença</span><h2>{convidado?.confirmacao_presenca === true ? 'Você confirmou presença.' : 'Você vem celebrar com a gente?'}</h2></div>
                 <div className="home-action-buttons">
-                    <button className="button button-primary" type="button" disabled={salvando || convidado?.confirmacao_presenca === true} onClick={() => void confirmarPresenca(true)}>Vou comparecer</button>
-                    <button className="button button-quiet" type="button" disabled={salvando || convidado?.confirmacao_presenca === false} onClick={() => void confirmarPresenca(false)}>Não poderei ir</button>
+                    <button className="button button-primary" type="button" disabled={salvando || convidado?.confirmacao_presenca === true} onClick={() => void confirmarPresenca(true)}>Com certeza eu vou!</button>
+                    <button className="button button-quiet" type="button" disabled={salvando || convidado?.confirmacao_presenca === false} onClick={() => void confirmarPresenca(false)}>Infelizmente não poderei ir</button>
                 </div>
             </section>
 

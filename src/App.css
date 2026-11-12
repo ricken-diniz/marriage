@@ -64,12 +64,13 @@ button:disabled {
 }
 
 .button-primary {
-  color: #fff;
+  color: var(--ink);
   background: var(--sage);
 }
 
 .button-primary:hover {
   background: var(--sage-dark);
+  color: var(--paper);
 }
 
 .button-quiet {
@@ -772,6 +773,41 @@ button:disabled {
   color: var(--sage-dark);
 }
 
+.presence-notification {
+  margin-bottom: 28px;
+  padding: 18px 20px;
+  border: 1px solid var(--sage);
+  border-left: 5px solid var(--sage-dark);
+  color: var(--sage-dark);
+  background: var(--lime);
+  box-shadow: 0 12px 28px rgba(0, 0, 128, 0.1);
+  animation: presence-notification-in 220ms ease-out;
+  line-height: 1.55;
+}
+
+.presence-notification.confirmada {
+  border-left-color: var(--sage-dark);
+}
+
+.presence-notification.recusada {
+  border-color: #e7b6a8;
+  border-left-color: var(--coral);
+  color: #7a3021;
+  background: #fff0e9;
+}
+
+@keyframes presence-notification-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .guest-section {
   padding: 30px 0;
   border-top: 1px solid var(--line);
@@ -1470,7 +1506,7 @@ button:disabled {
   display: grid;
   min-height: 100svh;
   grid-template-columns: minmax(0, 1.1fr) minmax(360px, 0.9fr);
-  background: #f7fbff;
+  background: var(--paper);
 }
 
 .login-story {
@@ -1480,14 +1516,14 @@ button:disabled {
   justify-content: center;
   overflow: hidden;
   padding: 72px clamp(32px, 8vw, 128px);
-  color: #f8f6ec;
-  background: var(--sage-dark);
+  color: var(--ink);
+  background: var(--sage);
 }
 
 .login-story::before,
 .login-story::after {
   position: absolute;
-  border: 1px solid rgba(217, 233, 189, 0.25);
+  border: 1px solid rgba(0, 0, 128, 0.2);
   border-radius: 50%;
   content: '';
 }
@@ -1512,9 +1548,9 @@ button:disabled {
   height: 58px;
   margin-bottom: 36px;
   place-items: center;
-  border: 1px solid rgba(217, 233, 189, 0.65);
+  border: 1px solid rgba(0, 0, 128, 0.55);
   border-radius: 50%;
-  color: var(--lime);
+  color: var(--ink);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.7rem;
   font-style: italic;
@@ -1530,13 +1566,13 @@ button:disabled {
 }
 
 .login-story .login-eyebrow {
-  color: var(--lime);
+  color: var(--ink);
 }
 
 .login-story h1 {
   max-width: 600px;
   margin-top: 16px;
-  color: #fffdf4;
+  color: var(--ink);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: clamp(3rem, 6vw, 6.6rem);
   font-weight: 400;
@@ -1547,7 +1583,7 @@ button:disabled {
 .login-story p {
   max-width: 390px;
   margin-top: 24px;
-  color: rgba(248, 246, 236, 0.75);
+  color: rgba(0, 0, 128, 0.72);
   font-size: 1rem;
   line-height: 1.65;
 }
@@ -1561,7 +1597,7 @@ button:disabled {
 
 .story-note {
   margin-top: 15px;
-  color: var(--lime);
+  color: var(--ink);
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 1.05rem;
   font-style: italic;
@@ -1571,7 +1607,7 @@ button:disabled {
   display: grid;
   align-items: center;
   padding: 48px clamp(28px, 7vw, 104px);
-  background: #f7fbff;
+  background: var(--paper);
 }
 
 .codigo-form {
@@ -1633,7 +1669,7 @@ button:disabled {
   padding: 15px 20px;
   border: 0;
   border-radius: 2px;
-  color: #fff;
+  color: var(--ink);
   background: var(--sage);
   font-weight: 800;
   transition: background 160ms ease, transform 160ms ease;
@@ -1641,6 +1677,7 @@ button:disabled {
 
 .codigo-form button:hover:not(:disabled) {
   background: var(--sage-dark);
+  color: var(--paper);
   transform: translateY(-1px);
 }
 

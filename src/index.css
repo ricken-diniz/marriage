@@ -1,7 +1,7 @@
 :root {
   font-family: 'Avenir Next', Avenir, 'Segoe UI', sans-serif;
   color: #4C5A69;
-  background: #f2f4ef;
+  background: #ffffff;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -9,7 +9,7 @@
   --muted: #4C5A69;
   --line: #d7e3ed;
   --paper: #ffffff;
-  --sage: #000080;
+  --sage: #B3CEE5;
   --sage-dark: #000066;
   --lime: #B3CEE5;
   --coral: #e77b5d;
