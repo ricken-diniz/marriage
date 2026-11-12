@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { alterarCodigoConvidado, criarConvidado, verCodigoConvidado } from '../api/auth'
 import '../App.css'
@@ -68,6 +68,10 @@ const moeda = new Intl.NumberFormat('pt-BR', {
   currency: 'BRL',
 })
 
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024
+const IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp'])
+const STORAGE_IMAGE_PREFIX = '/storage/v1/object/public/presentes/'
+
 function AdminPage() {
   const [aba, setAba] = useState<Tab>('convidados')
   const [convidados, setConvidados] = useState<Convidado[]>([])
@@ -99,6 +103,11 @@ function AdminPage() {
   const [valorPresente, setValorPresente] = useState('')
   const [valorCotaPresente, setValorCotaPresente] = useState('')
   const [imagemPresente, setImagemPresente] = useState('')
+  const [imagemArquivo, setImagemArquivo] = useState<File | null>(null)
+  const [imagemPreview, setImagemPreview] = useState<string | null>(null)
+  const [imagemRemovida, setImagemRemovida] = useState(false)
+  const imagemInputRef = useRef<HTMLInputElement>(null)
+  const imagemPreviewRef = useRef<string | null>(null)
   const [carregando, setCarregando] = useState(true)
   const [salvando, setSalvando] = useState(false)
   const [codigosConvidados, setCodigosConvidados] = useState<Record<string, string>>({})
@@ -170,6 +179,16 @@ function AdminPage() {
     void carregarInicialmente()
   }, [])
 
+  useEffect(() => () => {
+    if (imagemPreviewRef.current) URL.revokeObjectURL(imagemPreviewRef.current)
+  }, [])
+
+  function limparImagemPreview() {
+    if (imagemPreviewRef.current) URL.revokeObjectURL(imagemPreviewRef.current)
+    imagemPreviewRef.current = null
+    setImagemPreview(null)
+  }
+
   function limparFormularios() {
     setConvidadoEditando(null)
     setCompanhiaEditando(null)
@@ -187,7 +206,65 @@ function AdminPage() {
     setValorPresente('')
     setValorCotaPresente('')
     setImagemPresente('')
+    setImagemArquivo(null)
+    limparImagemPreview()
+    setImagemRemovida(false)
+    if (imagemInputRef.current) imagemInputRef.current.value = ''
     setErro(null)
+  }
+
+  function selecionarImagem(event: ChangeEvent<HTMLInputElement>) {
+    const arquivo = event.target.files?.[0] ?? null
+    if (!arquivo) return
+    if (!IMAGE_TYPES.has(arquivo.type)) {
+      setErro('Escolha uma imagem JPEG, PNG ou WebP.')
+      event.target.value = ''
+      return
+    }
+    if (arquivo.size > MAX_IMAGE_SIZE) {
+      setErro('A imagem deve ter no máximo 5 MB.')
+      event.target.value = ''
+      return
+    }
+    if (imagemPreviewRef.current) URL.revokeObjectURL(imagemPreviewRef.current)
+    const previewUrl = URL.createObjectURL(arquivo)
+    imagemPreviewRef.current = previewUrl
+    setImagemPreview(previewUrl)
+    setImagemArquivo(arquivo)
+    setImagemRemovida(false)
+    setErro(null)
+  }
+
+  function removerImagemSelecionada() {
+    setImagemArquivo(null)
+    limparImagemPreview()
+    setImagemPresente('')
+    setImagemRemovida(true)
+    if (imagemInputRef.current) imagemInputRef.current.value = ''
+  }
+
+  async function enviarImagem(arquivo: File) {
+    const extensao = arquivo.type.split('/')[1] === 'jpeg' ? 'jpg' : arquivo.type.split('/')[1]
+    const caminho = `presentes/${crypto.randomUUID()}.${extensao}`
+    const { error: uploadError } = await supabase.storage.from('presentes').upload(caminho, arquivo, {
+      cacheControl: '3600',
+      contentType: arquivo.type,
+      upsert: false,
+    })
+    if (uploadError) throw new Error(`Não foi possível enviar a imagem: ${uploadError.message}`)
+    return { caminho, url: supabase.storage.from('presentes').getPublicUrl(caminho).data.publicUrl }
+  }
+
+  function caminhoDaImagem(url: string | null) {
+    if (!url) return null
+    const indice = url.indexOf(STORAGE_IMAGE_PREFIX)
+    if (indice === -1) return null
+    return decodeURIComponent(url.slice(indice + STORAGE_IMAGE_PREFIX.length))
+  }
+
+  async function removerImagemDoStorage(url: string | null) {
+    const caminho = caminhoDaImagem(url)
+    if (caminho) await supabase.storage.from('presentes').remove([caminho])
   }
 
   async function salvarConvidado(event: FormEvent<HTMLFormElement>) {
@@ -268,12 +345,23 @@ function AdminPage() {
 
     setSalvando(true)
     setErro(null)
+    const imagemAnterior = presenteEditando ? presentes.find((presente) => presente.id === presenteEditando)?.imagem_url ?? null : null
+    let novaImagem: { caminho: string; url: string } | null = null
+
+    try {
+      if (imagemArquivo) novaImagem = await enviarImagem(imagemArquivo)
+    } catch (error) {
+      setErro(error instanceof Error ? error.message : 'Não foi possível enviar a imagem.')
+      setSalvando(false)
+      return
+    }
+
     const dados = {
       nome: nomePresente.trim(),
       descricao: descricaoPresente.trim() || null,
       valor,
       valor_cota: valorCota,
-      imagem_url: imagemPresente.trim() || null,
+      imagem_url: novaImagem?.url ?? (imagemRemovida ? null : imagemPresente.trim() || null),
       ...(presenteEditando ? {} : { visivel: true }),
     }
     const query = presenteEditando
@@ -281,8 +369,11 @@ function AdminPage() {
       : supabase.from('presentes').insert(dados)
     const { error: saveError } = await query
 
-    if (saveError) setErro(saveError.message)
-    else {
+    if (saveError) {
+      if (novaImagem) await removerImagemDoStorage(novaImagem.url)
+      setErro(saveError.message)
+    } else {
+      if (imagemAnterior && imagemAnterior !== dados.imagem_url) await removerImagemDoStorage(imagemAnterior)
       limparFormularios()
       await carregarDados()
     }
@@ -296,6 +387,7 @@ function AdminPage() {
   async function confirmarExclusao() {
     if (!exclusaoPendente) return
     const { tabela, id } = exclusaoPendente
+    const presenteExcluido = tabela === 'presentes' ? presentes.find((presente) => presente.id === id) : null
     setSalvando(true)
     setErro(null)
     const { error: deleteError } = await supabase.from(tabela).delete().eq('id', id)
@@ -303,6 +395,7 @@ function AdminPage() {
     else {
       if (tabela === 'presentes') setPresenteSelecionado(null)
       setExclusaoPendente(null)
+      if (presenteExcluido) await removerImagemDoStorage(presenteExcluido.imagem_url)
       await carregarDados()
     }
     setSalvando(false)
@@ -416,6 +509,10 @@ function AdminPage() {
     setValorPresente(String(presente.valor))
     setValorCotaPresente(String(presente.valor_cota))
     setImagemPresente(presente.imagem_url ?? '')
+    setImagemArquivo(null)
+    limparImagemPreview()
+    setImagemRemovida(false)
+    if (imagemInputRef.current) imagemInputRef.current.value = ''
   }
 
   return (
@@ -525,8 +622,15 @@ function AdminPage() {
                   <small className="field-help">Deixe vazio para usar o valor total como uma única cota.</small>
                 </label>
                 <label>
-                  URL da imagem
-                  <input type="url" value={imagemPresente} onChange={(event) => setImagemPresente(event.target.value)} placeholder="https://..." />
+                  Imagem do presente (opcional)
+                  <input ref={imagemInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={selecionarImagem} />
+                  <small className="field-help">JPEG, PNG ou WebP de até 5 MB. No celular, você pode escolher uma foto ou tirar uma nova.</small>
+                  {(imagemPreview || imagemPresente) && <div className="image-upload-preview"><img src={imagemPreview ?? imagemPresente} alt="Prévia da imagem do presente" /><button className="button button-quiet" type="button" onClick={removerImagemSelecionada}>Remover imagem</button></div>}
+                </label>
+                <label>
+                  URL da imagem (opcional)
+                  <input type="url" value={imagemPresente} onChange={(event) => { setImagemPresente(event.target.value); setImagemRemovida(false) }} placeholder="https://..." disabled={Boolean(imagemArquivo)} />
+                  <small className="field-help">Use este campo apenas para manter compatibilidade com imagens hospedadas externamente.</small>
                 </label>
                 <div className="form-actions">
                   <button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Adicionar'}</button>
@@ -611,7 +715,8 @@ function AdminPage() {
               <label>Descrição<textarea value={descricaoPresente} onChange={(event) => setDescricaoPresente(event.target.value)} rows={3} /></label>
               <label>Valor total<input inputMode="decimal" value={valorPresente} onChange={(event) => setValorPresente(event.target.value)} /></label>
               <label>Valor da cota (opcional)<input inputMode="decimal" value={valorCotaPresente} onChange={(event) => setValorCotaPresente(event.target.value)} /><small className="field-help">Deixe vazio para usar o valor total como uma única cota.</small></label>
-              <label>URL da imagem<input type="url" value={imagemPresente} onChange={(event) => setImagemPresente(event.target.value)} /></label>
+              <label>Imagem do presente (opcional)<input ref={imagemInputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={selecionarImagem} /><small className="field-help">Escolha uma nova imagem para substituir a atual.</small>{(imagemPreview || imagemPresente) && <div className="image-upload-preview"><img src={imagemPreview ?? imagemPresente} alt="Prévia da imagem do presente" /><button className="button button-quiet" type="button" onClick={removerImagemSelecionada}>Remover imagem</button></div>}</label>
+              <label>URL da imagem (opcional)<input type="url" value={imagemPresente} onChange={(event) => { setImagemPresente(event.target.value); setImagemRemovida(false) }} disabled={Boolean(imagemArquivo)} /></label>
               <div className="form-actions"><button className="button button-primary" type="submit" disabled={salvando}>{salvando ? 'Salvando...' : 'Salvar alterações'}</button><button className="button button-quiet" type="button" onClick={() => setPresenteEditando(null)}>Cancelar</button></div>
             </form>
           </> : <>

@@ -4,9 +4,12 @@ This template provides a minimal setup to get React working in Vite with HMR and
 
 Currently, two official plugins are available:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
 
+## Imagens de presentes
+
+As imagens selecionadas no painel administrativo são armazenadas no bucket público `presentes` do Supabase Storage. A migration `20261112000000_create_presentes_storage.sql` cria o bucket e permite upload, alteração e exclusão somente para administradores.
+
+O formulário aceita JPEG, PNG e WebP de até 5 MB. O link gerado pelo Storage continua sendo salvo na coluna `presentes.imagem_url`, mantendo compatibilidade com imagens externas já cadastradas.
 ## React Compiler
 
 The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
