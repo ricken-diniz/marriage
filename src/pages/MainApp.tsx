@@ -168,7 +168,7 @@ function MainApp() {
             {notificacaoPresenca && <div className={`presence-notification ${notificacaoPresenca.tipo}`} role="status" aria-live="polite">{notificacaoPresenca.texto}</div>}
 
             <section className="home-actions" aria-label="Ações do convite">
-                <div className="home-action-copy"><span className="admin-kicker">Presença</span><h2>{convidado?.confirmacao_presenca === true ? 'Você confirmou presença.' : 'Você vem celebrar com a gente?'}</h2></div>
+                <div className="home-action-copy"><span className="admin-kicker">Presença</span><h2>{convidado?.confirmacao_presenca === true ? 'Você confirmou presença.' : 'Vamos celebrar juntos?'}</h2></div>
                 <div className="home-action-buttons">
                     <button className="button button-primary" type="button" disabled={salvando || convidado?.confirmacao_presenca === true} onClick={() => void confirmarPresenca(true)}>Com certeza eu vou!</button>
                     <button className="button button-quiet" type="button" disabled={salvando || convidado?.confirmacao_presenca === false} onClick={() => void confirmarPresenca(false)}>Infelizmente não poderei ir</button>
@@ -177,10 +177,10 @@ function MainApp() {
 
             <section className="home-grid">
                 <div className="home-message-section">
-                    <div className="guest-section-heading"><div><span className="admin-kicker">Mural</span><h2>Mensagens para os noivos</h2></div><span>{mensagens.length} mensagens</span></div>
+                    <div className="guest-section-heading"><div><span className="admin-kicker">Mural</span><h2>Deixe um pedacinho do seu carinho</h2></div><span>{mensagens.length} mensagens</span></div>
                     <form className="message-form" onSubmit={registrarMensagem}>
                         <label htmlFor="nova-mensagem">Deixe uma mensagem</label>
-                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva algo especial para Jéssica e Nathan..." rows={4} maxLength={500} />
+                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva aqui um desejo, uma lembrança ou um conselho para nossa nova vida…" rows={4} maxLength={500} />
                         <button className="button button-primary" type="submit" disabled={salvando || !mensagemNova.trim()}>{salvando ? 'Enviando...' : 'Publicar mensagem'}</button>
                     </form>
                     <div className="message-list">

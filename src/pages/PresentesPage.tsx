@@ -275,7 +275,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
         <div>
           <span className="admin-kicker">Lista de presentes</span>
           <h1>Um carinho para começar a nossa casa.</h1>
-          <p>Escolha uma cota de presente ou contribua com o valor que fizer sentido para você.</p>
+          <p>Para facilitar, dividimos nossos presentes em cotas. Você pode presentear com uma ou mais cotas (ou até o item completo, se desejar!), sinta-se livre para escolher o que for melhor.</p>
         </div>
         <div className="guest-header-actions"><button className="button button-quiet" type="button" onClick={onHome}>Início</button><button className="button button-quiet" type="button" onClick={onLogout}>Sair</button></div>
       </header>
@@ -356,8 +356,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
           <p>Para isso, esses são os meios de pagamento das cotas:</p>
           <ul className="gift-payment-options">
             <li>Envie um pix no valor {pagamentoCotasModal.tipo === 'presente' ? 'total de ' : 'de '}<strong>{moeda.format(pagamentoCotasModal.tipo === 'presente' ? pagamentoCotasModal.quantidade * pagamentoCotasModal.presente.valor_cota : pagamentoCotasModal.contribuicao.valor_cota)}</strong> para a chave <strong>84999372625</strong> no nome de Jéssica Letícia.</li>
-            <li>Caso esteja comprando o presente por conta própria, você pode levá-lo no casamento ou entregar aos noivos entrando em contato!</li>
-            <li>Caso queira pagar com crédito, entre em contato com Jéssica por meio do contato: <strong>84999372625</strong>.</li>
+            <li>Caso esteja comprando o presente inteiro, você pode levá-lo no casamento ou entregar aos noivos entrando em contato!</li>
+            <li>Caso queira pagar com crédito, entre em contato com Jéssica por meio do contato: <strong><a href='https://wa.me/5584991858272'>84991858272</a></strong>.</li>
           </ul>
           <button className="button button-primary modal-action" type="button" onClick={confirmarPagamento}>OK, entendi!</button>
         </section>
