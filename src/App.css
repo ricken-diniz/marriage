@@ -1219,6 +1219,22 @@ button:disabled {
   background: #f7fbff;
 }
 
+.contribution-modal input.input-invalid {
+  border-color: var(--coral);
+  background: #fff0e9;
+  box-shadow: 0 0 0 2px rgba(212, 101, 80, 0.12);
+}
+
+.contribution-field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.contribution-field-error {
+  color: #7a3021;
+}
+
 .quantity-label {
   display: block;
   margin-top: 22px;

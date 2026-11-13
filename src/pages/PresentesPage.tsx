@@ -24,12 +24,17 @@ type ContribuicaoLivre = {
   confirmado: boolean
 }
 
+type PagamentoCotasModal =
+  | { tipo: 'presente'; presente: Presente; quantidade: number }
+  | { tipo: 'livre'; contribuicao: ContribuicaoLivre }
+
 type PresentesPageProps = {
   onHome: () => void
   onLogout: () => void
 }
 
 const moeda = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
+const valorMinimoContribuicaoLivre = 100
 
 function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [convidadoId, setConvidadoId] = useState<string | null>(null)
@@ -37,8 +42,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [contribuicoes, setContribuicoes] = useState<Contribuicao[]>([])
   const [contribuicoesLivres, setContribuicoesLivres] = useState<ContribuicaoLivre[]>([])
   const [presenteModal, setPresenteModal] = useState<Presente | null>(null)
-  const [pagamentoCotasModal, setPagamentoCotasModal] = useState<{ presente: Presente; quantidade: number } | null>(null)
-  const [confirmacaoCompra, setConfirmacaoCompra] = useState<{ presente: Presente; quantidade: number } | null>(null)
+  const [pagamentoCotasModal, setPagamentoCotasModal] = useState<PagamentoCotasModal | null>(null)
+  const [confirmacaoCompra, setConfirmacaoCompra] = useState<PagamentoCotasModal | null>(null)
   const [presenteRemocaoModal, setPresenteRemocaoModal] = useState<Presente | null>(null)
   const [contribuicaoLivreRemocaoModal, setContribuicaoLivreRemocaoModal] = useState<ContribuicaoLivre | null>(null)
   const [quantidadeModal, setQuantidadeModal] = useState(1)
@@ -110,7 +115,12 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   }
 
   function abrirPagamentoCotas(presente: Presente, quantidade: number) {
-    setPagamentoCotasModal({ presente, quantidade })
+    setPagamentoCotasModal({ tipo: 'presente', presente, quantidade })
+    setErro(null)
+  }
+
+  function abrirPagamentoContribuicaoLivre(contribuicao: ContribuicaoLivre) {
+    setPagamentoCotasModal({ tipo: 'livre', contribuicao })
     setErro(null)
   }
 
@@ -227,8 +237,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     event.preventDefault()
     if (!convidadoId) return
     const valor = Number(valorLivre.replace(',', '.'))
-    if (!Number.isFinite(valor) || valor <= 0) {
-      setErro('Informe um valor válido e maior que zero.')
+    if (!Number.isFinite(valor) || valor < valorMinimoContribuicaoLivre) {
+      setErro(`Informe um valor válido de pelo menos ${moeda.format(valorMinimoContribuicaoLivre)}.`)
       return
     }
 
@@ -241,9 +251,11 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
       .single()
     if (saveError) setErro(saveError.message)
     else {
-      setContribuicoesLivres((atuais) => [data as ContribuicaoLivre, ...atuais])
+      const contribuicao = data as ContribuicaoLivre
+      setContribuicoesLivres((atuais) => [contribuicao, ...atuais])
       setMensagem('Sua contribuição foi registrada com carinho.')
       fecharModal()
+      abrirPagamentoContribuicaoLivre(contribuicao)
     }
     setSalvando(false)
   }
@@ -254,6 +266,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     const jaEscolhido = contribuicoes.some((item) => item.presente_id === presente.id)
     return (presente.visivel || jaEscolhido) && textoNormalizado(presente.nome).includes(textoNormalizado(buscaPresente))
   })
+  const valorLivreNumerico = Number(valorLivre.replace(',', '.'))
+  const valorLivreInvalido = valorLivre.trim() !== '' && (!Number.isFinite(valorLivreNumerico) || valorLivreNumerico < valorMinimoContribuicaoLivre)
 
   return (
     <main className="guest-shell">
@@ -298,7 +312,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
             if (contribuicao.id !== contribuicoes.find((item) => item.presente_id === presente.id)?.id) return null
             return <article className="my-contribution" key={contribuicao.id}><div><strong>{presente.nome}</strong><span>{quantidade} {quantidade === 1 ? 'cota' : 'cotas'} · {moeda.format(quantidade * presente.valor_cota)}{cotasConfirmadas ? ` · ${cotasConfirmadas} confirmada${cotasConfirmadas === 1 ? '' : 's'}` : ''}</span></div><div className="my-contribution-actions"><button className="pay-contributions-button" type="button" disabled={salvando} onClick={() => abrirPagamentoCotas(presente, quantidade)}>Pagar as cotas</button>{cotasNaoConfirmadas ? <button type="button" disabled={salvando} onClick={() => { setPresenteRemocaoModal(presente); setQuantidadeRemocao(1); setErro(null) }}>Remover cotas</button> : <span className="confirmed-contribution-label">Cotas confirmadas</span>}</div></article>
           })}
-          {contribuicoesLivres.map((contribuicao) => <article className="my-contribution" key={contribuicao.id}><div><strong>Contribuição livre</strong><span>{moeda.format(contribuicao.valor_cota)}{contribuicao.confirmado ? ' · Confirmada' : ' · Aguardando confirmação'}</span></div>{contribuicao.confirmado ? <span className="confirmed-contribution-label">Valor confirmado</span> : <button type="button" disabled={salvando} onClick={() => { setContribuicaoLivreRemocaoModal(contribuicao); setErro(null) }}>Remover contribuição</button>}</article>)}
+          {contribuicoesLivres.map((contribuicao) => <article className="my-contribution" key={contribuicao.id}><div><strong>Contribuição livre</strong><span>{moeda.format(contribuicao.valor_cota)}{contribuicao.confirmado ? ' · Confirmada' : ' · Aguardando confirmação'}</span></div>{contribuicao.confirmado ? <span className="confirmed-contribution-label">Valor confirmado</span> : <div className="my-contribution-actions"><button className="pay-contributions-button" type="button" disabled={salvando} onClick={() => abrirPagamentoContribuicaoLivre(contribuicao)}>Pagar a contribuição</button><button type="button" disabled={salvando} onClick={() => { setContribuicaoLivreRemocaoModal(contribuicao); setErro(null) }}>Remover contribuição</button></div>}</article>)}
           {!contribuicoes.length && !contribuicoesLivres.length && <p className="empty-state">Seu carrinho de carinho está vazio por enquanto.</p>}
         </div>
       </section>
@@ -326,7 +340,8 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
             <h2 id="modal-title">Escolha o seu valor</h2>
             <form onSubmit={contribuirLivre}>
               <label htmlFor="valor-livre">Valor da sua cota</label>
-              <input id="valor-livre" inputMode="decimal" value={valorLivre} onChange={(event) => setValorLivre(event.target.value)} placeholder="0,00" autoFocus />
+              <input id="valor-livre" className={valorLivreInvalido ? 'input-invalid' : undefined} inputMode="decimal" min={valorMinimoContribuicaoLivre} step="0.01" aria-describedby="valor-livre-hint" value={valorLivre} onChange={(event) => setValorLivre(event.target.value)} placeholder="100,00" autoFocus />
+              <p id="valor-livre-hint" className={valorLivreInvalido ? 'contribution-field-hint contribution-field-error' : 'contribution-field-hint'}>O valor mínimo é {moeda.format(valorMinimoContribuicaoLivre)}.</p>
               <button className="button button-primary modal-action" type="submit" disabled={salvando || !valorLivre.trim()}>{salvando ? 'Registrando...' : 'Confirmar contribuição'}</button>
             </form>
           </>}
@@ -336,11 +351,11 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
       {pagamentoCotasModal && <div className="modal-backdrop" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !salvando) fecharModal() }}>
         <section className="contribution-modal gift-payment-modal" role="dialog" aria-modal="true" aria-labelledby="gift-payment-title">
           <button className="modal-close" type="button" aria-label="Fechar" disabled={salvando} onClick={fecharModal}>×</button>
-          <span className="admin-kicker">Pagamento das cotas</span>
+          <span className="admin-kicker">{pagamentoCotasModal.tipo === 'presente' ? 'Pagamento das cotas' : 'Pagamento da contribuição'}</span>
           <h2 id="gift-payment-title">Que bom que você pretende participar da nossa história!</h2>
           <p>Para isso, esses são os meios de pagamento das cotas:</p>
           <ul className="gift-payment-options">
-            <li>Envie um pix no valor total de <strong>{moeda.format(pagamentoCotasModal.quantidade * pagamentoCotasModal.presente.valor_cota)}</strong> para a chave <strong>84999372625</strong> no nome de Jéssica Letícia.</li>
+            <li>Envie um pix no valor {pagamentoCotasModal.tipo === 'presente' ? 'total de ' : 'de '}<strong>{moeda.format(pagamentoCotasModal.tipo === 'presente' ? pagamentoCotasModal.quantidade * pagamentoCotasModal.presente.valor_cota : pagamentoCotasModal.contribuicao.valor_cota)}</strong> para a chave <strong>84999372625</strong> no nome de Jéssica Letícia.</li>
             <li>Caso esteja comprando o presente por conta própria, você pode levá-lo no casamento ou entregar aos noivos entrando em contato!</li>
             <li>Caso queira pagar com crédito, entre em contato com Jéssica por meio do contato: <strong>84999372625</strong>.</li>
           </ul>
@@ -355,7 +370,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
           <span className="admin-kicker">Um gesto muito especial</span>
           <h2 id="purchase-confirmation-title">Obrigado pelo carinho!</h2>
           <p className="gift-purchase-confirmation-message">Muito obrigado(a) pelo carinho!<br />Seu presente já faz parte do nosso sonho e do início da nossa vida juntos. Saber que temos o seu apoio deixa tudo ainda mais especial. Mal podemos esperar para te dar um abraço bem apertado no nosso grande dia!</p>
-          <p className="gift-purchase-summary">{confirmacaoCompra.quantidade} {confirmacaoCompra.quantidade === 1 ? 'cota' : 'cotas'} de {confirmacaoCompra.presente.nome}</p>
+          <p className="gift-purchase-summary">{confirmacaoCompra.tipo === 'presente' ? `${confirmacaoCompra.quantidade} ${confirmacaoCompra.quantidade === 1 ? 'cota' : 'cotas'} de ${confirmacaoCompra.presente.nome}` : `Contribuição livre de ${moeda.format(confirmacaoCompra.contribuicao.valor_cota)}`}</p>
           <div className="gift-purchase-confirmation-actions">
             <button className="button button-primary" type="button" onClick={fecharModal}>Voltar</button>
           </div>
