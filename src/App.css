@@ -1718,17 +1718,16 @@ button:disabled {
 }
 
 .monogram {
-  display: grid;
-  width: 58px;
-  height: 58px;
-  margin-bottom: 36px;
-  place-items: center;
-  border: 1px solid rgba(0, 0, 128, 0.55);
-  border-radius: 50%;
-  color: var(--ink);
-  font-family: Georgia, 'Times New Roman', serif;
-  font-size: 1.7rem;
-  font-style: italic;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: auto;
+}
+
+.monogram img {
+  width: 100%;
+  padding: 0 30%;
 }
 
 .login-eyebrow {
@@ -1881,10 +1880,8 @@ button:disabled {
   }
 
   .monogram {
-    width: 46px;
-    height: 46px;
-    margin-bottom: 26px;
-    font-size: 1.4rem;
+    width: 100%;
+    height: auto;
   }
 
   .login-story h1 {

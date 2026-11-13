@@ -1,4 +1,5 @@
 import { useState, type SubmitEventHandler } from 'react'
+import monogramImage from '../assets/IMG_5339.PNG'
 
 interface LoginPageProps {
   onSubmit: (code: string) => Promise<unknown>
@@ -28,10 +29,12 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
   return (
     <div className="login-page">
       <section className="login-story" aria-label="Boas-vindas">
-        <div className="monogram" aria-hidden="true">JN</div>
+        <div className="monogram">
+          <img src={monogramImage} alt="" aria-hidden="true" />
+        </div>
         <span className="login-eyebrow">26/12/2026</span>
-        <h1>Que bom ter você com a gente.</h1>
-        <p>Este espaço foi preparado para guardar cada detalhe de uma celebração muito especial.</p>
+        <h1>Sejam bem-vindos!</h1>
+        <p>Preparem o coração, porque o caminho até o altar já começou. Preparamos este espaço para compartilhar cada detalhe da nossa celebração.</p>
         <div className="story-line" aria-hidden="true" />
         <span className="story-note">Com carinho, Jéssica &amp; Nathan</span>
       </section>
