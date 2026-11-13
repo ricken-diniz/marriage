@@ -6,7 +6,7 @@ interface LoginPageProps {
 }
 
 export function LoginPage({ onSubmit }: LoginPageProps) {
-  const [codigo, setCodigo] = useState('')
+  const [codigo, setCodigo] = useState(() => new URLSearchParams(window.location.search).get('codigo') ?? '')
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
 

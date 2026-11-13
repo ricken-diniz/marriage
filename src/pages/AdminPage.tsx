@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type FormEvent, type MouseEvent } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { alterarCodigoConvidado, criarConvidado, verCodigoConvidado } from '../api/auth'
 import '../App.css'
@@ -449,6 +449,46 @@ function AdminPage() {
     setSalvando(false)
   }
 
+  function mensagemConvite(convidado: Convidado) {
+    const codigo = codigosConvidados[convidado.id] ?? ''
+    const linkSite = `https://www.casamentojn.com/?${new URLSearchParams({ codigo }).toString()}`
+    return `Querido(a) ${convidado.nome},
+Nós pedimos para acalmar os corações e agora o momento finalmente chegou! ✨💙
+Será uma alegria imensa ter você ao nosso lado celebrando o nosso casamento no dia 26/12/2026, às 18:30.
+
+Para conferir todos os detalhes, basta abrir o arquivo em anexo e tocar nos ícones na tela para acessar a localização dos eventos e o nosso site.
+
+Ao entrar no site para ver a lista de presentes ou confirmar sua presença, utilize a sua chave individual.
+Código de acesso: ${codigo}
+Solicitamos que confirme sua presença por lá até o dia 30/11/2026. Esperamos por você para vivermos esse dia juntos!
+
+${linkSite}`
+  }
+
+  async function marcarConviteComoEnviado(convidado: Convidado) {
+    if (convidado.recebeu_convite) return
+    setSalvando(true)
+    setErro(null)
+    const { error: saveError } = await supabase
+      .from('convidados')
+      .update({ recebeu_convite: true })
+      .eq('id', convidado.id)
+
+    if (saveError) setErro(saveError.message)
+    else setConvidados((atuais) => atuais.map((atual) => atual.id === convidado.id ? { ...atual, recebeu_convite: true } : atual))
+    setSalvando(false)
+  }
+
+  function abrirConviteWhatsApp(event: MouseEvent<HTMLAnchorElement>, convidado: Convidado) {
+    const telefone = somenteNumeros(convidado.telefone ?? '')
+    if (salvando || !telefone) {
+      event.preventDefault()
+      if (!telefone) setErro('Cadastre um telefone para abrir o convite no WhatsApp.')
+      return
+    }
+    void marcarConviteComoEnviado(convidado)
+  }
+
   function nomeDoConvidado(id: string) {
     return convidados.find((convidado) => convidado.id === id)?.nome ?? 'Convidado não encontrado'
   }
@@ -591,7 +631,7 @@ function AdminPage() {
                 <div className="presentes-list-heading"><div><span className="admin-kicker">Cadastro</span><h2>Convidados cadastrados</h2></div><span>{convidadosFiltrados.length} de {convidados.length} itens</span></div>
                 <div className="list-search-controls"><label className="list-search"><span>Pesquisar convidados</span><input type="search" value={buscaConvidado} onChange={(event) => setBuscaConvidado(event.target.value)} placeholder="Nome ou número de telefone" /></label><label className="list-filter"><span>Telefone</span><select value={filtroTelefone} onChange={(event) => setFiltroTelefone(event.target.value as FiltroTelefone)}><option value="todos">Todos</option><option value="com-numero">Com número cadastrado</option><option value="sem-numero">Sem número cadastrado</option></select></label><label className="list-filter"><span>Pré-convite</span><select value={filtroPreConvite} onChange={(event) => setFiltroPreConvite(event.target.value as FiltroStatusConvite)}><option value="todos">Todos</option><option value="recebido">Recebido</option><option value="pendente">Pendente</option></select></label><label className="list-filter"><span>Convite</span><select value={filtroConvite} onChange={(event) => setFiltroConvite(event.target.value as FiltroStatusConvite)}><option value="todos">Todos</option><option value="recebido">Recebido</option><option value="pendente">Pendente</option></select></label></div>
                 <div className="admin-list">
-                  {convidadosFiltrados.map((convidado) => <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.telefone ? `Telefone: ${convidado.telefone}` : 'Telefone não informado'}</span><div className="guest-status-actions"><button className={`guest-status-button${convidado.recebeu_pre_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_pre_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_pre_convite')}>Pré-convite</button><button className={`guest-status-button${convidado.recebeu_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_convite')}>Convite</button></div><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article>)}
+                  {convidadosFiltrados.map((convidado) => { const telefone = somenteNumeros(convidado.telefone ?? ''); return <article className="admin-row" key={convidado.id}><div><strong>{convidado.nome}</strong><span>{convidado.telefone ? `Telefone: ${convidado.telefone}` : 'Telefone não informado'}</span><div className="guest-status-actions"><button className={`guest-status-button${convidado.recebeu_pre_convite ? ' received' : ''}`} type="button" aria-pressed={convidado.recebeu_pre_convite} disabled={salvando} onClick={() => void alternarStatusConvite(convidado, 'recebeu_pre_convite')}>Pré-convite</button><a className={`guest-status-button${convidado.recebeu_convite ? ' received' : ''}`} href={telefone ? `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagemConvite(convidado))}` : undefined} target="_blank" rel="noreferrer" aria-disabled={salvando || !telefone} onClick={(event) => abrirConviteWhatsApp(event, convidado)}>Convite</a></div><span>{convidado.confirmacao_presenca === null ? 'Aguardando confirmação' : convidado.confirmacao_presenca ? 'Presença confirmada' : 'Não irá comparecer'}</span><code className="access-code">{codigosConvidados[convidado.id] ?? 'Carregando código...'}</code></div><div className="row-actions"><button type="button" onClick={() => editarConvidado(convidado)}>Editar</button><button type="button" onClick={() => solicitarExclusao('convidados', convidado.id, convidado.nome, 'convidado')}>Excluir</button></div></article> })}
                   {!convidadosFiltrados.length && <p className="empty-state">{convidados.length ? 'Nenhum convidado encontrado.' : 'Nenhum convidado cadastrado.'}</p>}
                 </div>
               </section>

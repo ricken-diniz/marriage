@@ -428,6 +428,7 @@ button:disabled {
 }
 
 .guest-status-button {
+  display: inline-block;
   padding: 5px 9px;
   border: 1px solid #d66a52;
   border-radius: 999px;
@@ -435,6 +436,8 @@ button:disabled {
   background: #fff0e9;
   font-size: 0.74rem;
   font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .guest-status-button.received {
@@ -1757,6 +1760,13 @@ button:disabled {
 
 .login-story .login-eyebrow {
   color: var(--ink);
+}
+
+@media (min-width: 600px) {
+  .monogram img {
+    padding-right: 33%;
+    padding-left: 33%;
+  }
 }
 
 .login-story h1 {
