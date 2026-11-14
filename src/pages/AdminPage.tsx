@@ -492,6 +492,46 @@ ${linkSite}`
     void marcarConviteComoEnviado(convidado)
   }
 
+  function contribuicoesPendentes(convidadoId: string) {
+    return contribuicoes.filter((item) => item.convidado_id === convidadoId && !item.confirmado).length
+      + contribuicoesLivres.filter((item) => item.convidado_id === convidadoId && !item.confirmado).length
+  }
+
+  function mensagemCobranca(convidado: Convidado) {
+    const cotasPendentes = contribuicoes
+      .filter((item) => item.convidado_id === convidado.id && !item.confirmado)
+      .map((item) => {
+        const presente = presentes.find((registro) => registro.id === item.presente_id)
+        const valor = presente?.valor_cota ?? 0
+        return { linha: `- 1 cota de ${presente?.nome ?? 'presente'}: ${moeda.format(valor)}`, valor }
+      })
+    const livresPendentes = contribuicoesLivres
+      .filter((item) => item.convidado_id === convidado.id && !item.confirmado)
+      .map((item) => ({ linha: `- Contribuição livre: ${moeda.format(item.valor_cota)}`, valor: item.valor_cota }))
+    const pendencias = [...cotasPendentes, ...livresPendentes]
+    const total = pendencias.reduce((valor, pendencia) => valor + pendencia.valor, 0)
+    return `Oi, ${convidado.nome}! Tudo bem? 💙
+
+Passando com muito carinho para lembrar das contribuições do nosso casamento. Ficaram pendentes:
+${pendencias.map((pendencia) => pendencia.linha).join('\n')}
+
+Total pendente: ${moeda.format(total)}.
+
+Quando puder, você pode realizar o pagamento e nos avisar? Cada gesto de carinho é muito especial para nós. Muito obrigado por fazer parte desse momento!`
+  }
+
+  function abrirCobrancaWhatsApp(event: MouseEvent<HTMLAnchorElement>, convidado: Convidado) {
+    const telefone = somenteNumeros(convidado.telefone ?? '')
+    if (salvando || !telefone || !contribuicoesPendentes(convidado.id)) {
+      event.preventDefault()
+      if (!telefone) setErro('Cadastre um telefone para cobrar este convidado no WhatsApp.')
+      return
+    }
+    event.preventDefault()
+    const url = `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagemCobranca(convidado))}`
+    window.location.assign(url)
+  }
+
   function nomeDoConvidado(id: string) {
     return convidados.find((convidado) => convidado.id === id)?.nome ?? 'Convidado não encontrado'
   }
@@ -743,10 +783,17 @@ ${linkSite}`
                 {convidadosComContribuicoes.map((convidado) => {
                   const cotas = contribuicoes.filter((item) => item.convidado_id === convidado.id)
                   const livres = contribuicoesLivres.filter((item) => item.convidado_id === convidado.id)
-                  return <button className="admin-row confirmation-row" type="button" key={convidado.id} onClick={() => setConvidadoContribuicoes(convidado.id)}>
-                    <span><strong>{convidado.nome}</strong><span>{cotas.length + livres.length} {cotas.length + livres.length === 1 ? 'contribuição' : 'contribuições'}</span></span>
-                    <span className="confirmation-summary">{moeda.format(valorDasContribuicoes(convidado.id))} <b>→</b></span>
-                  </button>
+                  const pendentes = contribuicoesPendentes(convidado.id)
+                  const telefone = somenteNumeros(convidado.telefone ?? '')
+                  return <article className="admin-row confirmation-row" key={convidado.id}>
+                    <button className="confirmation-row-trigger" type="button" onClick={() => setConvidadoContribuicoes(convidado.id)}>
+                      <span><strong>{convidado.nome}</strong><span>{cotas.length + livres.length} {cotas.length + livres.length === 1 ? 'contribuição' : 'contribuições'}</span></span>
+                      <span className="confirmation-summary">{moeda.format(valorDasContribuicoes(convidado.id))} <b>→</b></span>
+                    </button>
+                    <div className="row-actions">
+                      <a className="confirmation-charge-button" href={telefone && pendentes ? `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagemCobranca(convidado))}` : undefined} aria-disabled={salvando || !telefone || !pendentes} onClick={(event) => abrirCobrancaWhatsApp(event, convidado)}>Cobrar</a>
+                    </div>
+                  </article>
                 })}
                 {!convidadosComContribuicoes.length && <p className="empty-state">{convidados.length ? 'Nenhum convidado encontrado.' : 'Nenhum convidado cadastrado.'}</p>}
               </div>

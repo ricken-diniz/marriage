@@ -1414,6 +1414,44 @@ button:disabled {
   background: var(--paper);
 }
 
+.confirmation-row-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1 1 280px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  text-align: left;
+}
+
+.confirmation-row-trigger > span:first-child {
+  min-width: 0;
+}
+
+.confirmation-row .row-actions {
+  flex: 0 0 auto;
+}
+
+.confirmation-charge-button {
+  display: inline-block;
+  padding: 7px 11px;
+  color: var(--sage-dark);
+  background: var(--lime);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.confirmation-charge-button[aria-disabled='true'] {
+  color: var(--muted);
+  background: var(--line);
+  cursor: not-allowed;
+}
+
 .confirmation-summary {
   display: flex;
   align-items: center;
