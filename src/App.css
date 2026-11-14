@@ -873,6 +873,11 @@ button:disabled {
   background: var(--paper);
 }
 
+.guest-gift-unavailable {
+  filter: grayscale(0.65);
+  background: #eef0eb;
+}
+
 .guest-gift img,
 .guest-gift .gift-placeholder {
   width: 110px;
@@ -923,6 +928,7 @@ button:disabled {
 .guest-gift button:disabled {
   color: var(--muted);
   background: var(--line);
+  cursor: not-allowed;
 }
 
 .guest-free-form {

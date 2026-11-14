@@ -56,6 +56,15 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
   const [erro, setErro] = useState<string | null>(null)
   const [buscaPresente, setBuscaPresente] = useState('')
 
+  async function recarregarPresentes() {
+    const { data, error: presentesError } = await supabase
+      .from('presentes')
+      .select('id, nome, descricao, valor, valor_cota, imagem_url, visivel')
+      .order('nome')
+    if (presentesError) setErro(presentesError.message)
+    else setPresentes((data ?? []) as Presente[])
+  }
+
   useEffect(() => {
     async function carregarDados() {
       const [convidadoResult, presentesResult] = await Promise.all([
@@ -165,6 +174,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
         ...todos.filter((item) => !idsRemovidos.includes(item.id)),
         ...novasContribuicoes,
       ])
+      await recarregarPresentes()
       setMensagem('Suas cotas foram registradas com carinho.')
       setPresenteModal(null)
       setQuantidadeModal(1)
@@ -213,6 +223,7 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
     if (deleteError) setErro(deleteError.message)
     else {
       setContribuicoes((atuais) => atuais.filter((item) => !ids.includes(item.id)))
+      await recarregarPresentes()
       setMensagem('Suas cotas foram removidas.')
       setPresenteRemocaoModal(null)
     }
@@ -290,9 +301,9 @@ function PresentesPage({ onHome, onLogout }: PresentesPageProps) {
         <label className="list-search guest-gift-search"><span>Pesquisar presentes</span><input type="search" aria-label="Pesquisar presentes por nome" value={buscaPresente} onChange={(event) => setBuscaPresente(event.target.value)} placeholder="Nome do presente" /></label>
         <div className="guest-gifts">
           {presentesVisiveis.map((presente) => {
-            return <article className="guest-gift" key={presente.id}>
+            return <article className={`guest-gift${presente.visivel ? '' : ' guest-gift-unavailable'}`} key={presente.id}>
               {presente.imagem_url ? <img src={presente.imagem_url} alt="" /> : <div className="gift-placeholder">P</div>}
-              <div className="guest-gift-details"><div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div><button type="button" disabled={salvando} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button></div>
+              <div className="guest-gift-details"><div className="guest-gift-copy"><h3>{presente.nome}</h3><p>{moeda.format(presente.valor_cota)} por cota · {moeda.format(presente.valor)} total</p></div><button type="button" disabled={salvando || !presente.visivel} onClick={() => abrirPresente(presente)}>{presente.visivel ? 'Ver presente' : 'Cotas encerradas'}</button></div>
             </article>
           })}
           {!presentesVisiveis.length && <p className="empty-state">Nenhum presente encontrado.</p>}
