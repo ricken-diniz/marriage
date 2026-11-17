@@ -512,12 +512,14 @@ ${linkSite}`
     const total = pendencias.reduce((valor, pendencia) => valor + pendencia.valor, 0)
     return `Oi, ${convidado.nome}! Tudo bem? 💙
 
-Passando com muito carinho para lembrar das contribuições do nosso casamento. Ficaram pendentes:
+Passando com muito carinho para lembrar que sua seleção na nossa lista de casamento ainda consta como aguardando pagamento:
 ${pendencias.map((pendencia) => pendencia.linha).join('\n')}
 
 Total pendente: ${moeda.format(total)}.
 
-Quando puder, você pode realizar o pagamento e nos avisar? Cada gesto de carinho é muito especial para nós. Muito obrigado por fazer parte desse momento!`
+Enquanto o pagamento não é concluído, o sistema deixa o presente indisponível no site para outros convidados. Caso tenha tido algum probleminha para concluir ou o código tenha expirado, é só nos chamar! Quando puder finalizar, nos avisa por favor.
+
+Cada gesto de carinho é muito especial para nós. Muito obrigado por fazer parte desse momento!`
   }
 
   function abrirCobrancaWhatsApp(event: MouseEvent<HTMLAnchorElement>, convidado: Convidado) {

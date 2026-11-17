@@ -1,5 +1,7 @@
 import { useState, type SubmitEventHandler } from 'react'
+import InvitationPage from './InvitationPage'
 import monogramImage from '../assets/IMG_5339.PNG'
+import flowerImage from '../assets/t.webp'
 
 interface LoginPageProps {
   onSubmit: (code: string) => Promise<unknown>
@@ -9,6 +11,7 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
   const [codigo, setCodigo] = useState(() => new URLSearchParams(window.location.search).get('codigo') ?? '')
   const [carregando, setCarregando] = useState(false)
   const [erro, setErro] = useState<string | null>(null)
+  const [conviteAberto, setConviteAberto] = useState(false)
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = async (e) => {
     e.preventDefault()
@@ -26,47 +29,39 @@ export function LoginPage({ onSubmit }: LoginPageProps) {
     }
   }
 
+  if (conviteAberto) {
+    return (
+      <InvitationPage
+        codigo={codigo}
+        onCodigoChange={setCodigo}
+        onSubmit={handleSubmit}
+        carregando={carregando}
+        erro={erro}
+        showLogin
+      />
+    )
+  }
+
   return (
-    <div className="login-page">
-      <section className="login-story" aria-label="Boas-vindas">
-        <div className="monogram">
-          <img src={monogramImage} alt="" aria-hidden="true" />
+    <main className="opening-page">
+      <div className="opening-wash" aria-hidden="true" />
+      <img className="opening-flower opening-flower-left" src={flowerImage} alt="" aria-hidden="true" />
+      <img className="opening-flower opening-flower-right" src={flowerImage} alt="" aria-hidden="true" />
+      <section className="opening-card" aria-label="Abrir convite">
+        <p className="opening-kicker">Um convite especial</p>
+        <div className="opening-monogram">
+          <img src={monogramImage} alt="Monograma de Jéssica e Nathan" />
         </div>
-        <span className="login-eyebrow">26/12/2026</span>
-        <h1>Sejam bem-vindos!</h1>
-        <p>Preparem o coração, porque o caminho até o altar já começou. Preparamos este espaço para compartilhar cada detalhe da nossa celebração.</p>
-        <div className="story-line" aria-hidden="true" />
-        <span className="story-note">Com carinho, Jéssica &amp; Nathan</span>
+        <p className="opening-date">26 de dezembro de 2026</p>
+        <h1>Jéssica <span>&amp;</span> Nathan</h1>
+        <p className="opening-copy">Preparamos cada detalhe com carinho. Você está convidado a viver este dia com a gente.</p>
+        <button className="opening-button" type="button" onClick={() => setConviteAberto(true)}>
+          <span>abrir convite</span>
+          <span aria-hidden="true">↗</span>
+        </button>
+        <p className="opening-hint">Toque para entrar</p>
       </section>
-
-      <section className="login-panel">
-        <form onSubmit={handleSubmit} className="codigo-form">
-          <span className="login-eyebrow">Acesso reservado</span>
-          <h2>Entre com seu código</h2>
-          <p>Use o código que enviamos especialmente para você.</p>
-
-          <label htmlFor="codigo">Código do convite</label>
-          <input
-            id="codigo"
-            type="text"
-            value={codigo}
-            onChange={(e) => setCodigo(e.target.value)}
-            placeholder="Ex.: ABC123"
-            disabled={carregando}
-            autoFocus
-            autoComplete="one-time-code"
-            spellCheck="false"
-          />
-
-          {erro && <span className="codigo-erro" role="alert">{erro}</span>}
-
-          <button type="submit" disabled={carregando || !codigo.trim()}>
-            {carregando ? 'Conferindo...' : 'Abrir convite'}
-          </button>
-          <small>O código diferencia letras maiúsculas e minúsculas.</small>
-        </form>
-      </section>
-    </div>
+    </main>
   )
 }
 
