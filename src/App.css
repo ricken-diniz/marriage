@@ -2017,6 +2017,7 @@ button:disabled {
 
 .countdown-date span { margin: 0 12px; }
 .countdown-weekday { margin-top: 10px !important; font-size: clamp(0.7rem, 1.7vw, 0.92rem); letter-spacing: 0.08em; text-transform: uppercase; }
+.countdown-time { color: #2d4164; font-size: 1.18em; font-weight: 800; letter-spacing: 0; }
 .countdown-panel { margin-top: 28px; padding: 12px 28px 18px; border-radius: 999px; color: #f4f0e9; background: #91a8d0; }
 .countdown-caption {
   margin-top: 0 !important;
@@ -2059,11 +2060,29 @@ button:disabled {
 }
 
 .invitation-story {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 0.86fr) minmax(320px, 1fr);
   align-items: center;
   gap: clamp(48px, 9vw, 130px);
 }
+
+.invitation-story > *,
+.invitation-instructions > *,
+.invitation-details > *,
+.invitation-final > * { position: relative; z-index: 1; }
+
+.section-flower {
+  position: absolute !important;
+  z-index: 0 !important;
+  width: clamp(120px, 18vw, 220px);
+  opacity: 0.82;
+  pointer-events: none;
+}
+
+.section-flower-story { right: -42px; bottom: -55px; transform: rotate(-24deg); }
 
 .story-copy h2,
 .details-copy h2,
@@ -2097,7 +2116,7 @@ button:disabled {
 .story-frame-art > img:first-child {
   display: block;
   width: 100%;
-  aspect-ratio: 1.16;
+  aspect-ratio: 16 / 9;
   object-fit: cover;
 }
 
@@ -2134,11 +2153,17 @@ button:disabled {
 .gallery-note strong { color: #2d4164; font-weight: 400; }
 
 .invitation-instructions {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: grid;
   grid-template-columns: minmax(230px, 0.75fr) minmax(0, 1.25fr);
   gap: 60px;
   background: #f1eee8;
 }
+
+.section-flower-instructions-left { bottom: -52px; left: -38px; transform: rotate(-28deg); }
+.section-flower-instructions-right { top: -62px; right: -35px; transform: rotate(150deg) scale(0.82); }
 
 .instructions-heading h2 {
   margin-top: 15px;
@@ -2184,14 +2209,18 @@ button:disabled {
   font-size: 0.82rem;
   font-weight: 700;
   line-height: 1.4;
-  text-transform: lowercase;
 }
 
 .invitation-details {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: block;
   text-align: center;
   background: #e5ecf2;
 }
+
+.section-flower-details { top: -54px; right: -26px; transform: rotate(145deg) scale(0.8); }
 
 .details-copy { max-width: 760px; margin: 0 auto; }
 .details-copy > p:not(.invitation-kicker) { color: #68778c; line-height: 1.7; }
@@ -2200,13 +2229,12 @@ button:disabled {
 .details-palette { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); width: min(100%, 520px); margin: 34px auto 0; gap: 3px; }
 .details-palette span { display: block; aspect-ratio: 1; }
 
-.invitation-final { display: grid; grid-template-columns: 1fr 0.8fr; align-items: center; gap: 70px; }
+.invitation-final { position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: 1fr 0.8fr; align-items: center; gap: 70px; }
+.section-flower-final-left { top: -54px; left: -34px; transform: rotate(-22deg); }
+.section-flower-final-right { right: -35px; bottom: -58px; transform: rotate(155deg) scale(0.86); }
 .final-photo-frame { position: relative; padding: 8%; }
 .final-photo-image { display: block; width: 100%; aspect-ratio: 0.75; object-fit: cover; }
 .final-photo-overlay { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
-.final-photo-flower { position: absolute; z-index: 1; width: 24%; pointer-events: none; }
-.final-photo-flower-left { top: 2%; left: -3%; transform: rotate(-28deg); }
-.final-photo-flower-right { right: -3%; bottom: 1%; transform: scaleX(-1) rotate(-22deg); }
 .final-copy { text-align: center; }
 .final-copy > p:not(.invitation-kicker) { margin-top: 18px; color: #68778c; line-height: 1.7; }
 .final-locations { display: grid; gap: 22px; margin-top: 34px; }
@@ -2250,10 +2278,11 @@ button:disabled {
   .details-colors { font-size: 0.85rem; }
   .countdown-date { margin-top: 12px !important; }
   .countdown-date span { margin: 0 6px; }
+  .countdown-weekday { font-size: 0.86rem; }
+  .countdown-time { font-size: 1.22em; }
   .countdown-panel { margin-top: 22px; padding: 10px 12px 14px; }
   .countdown-values { margin-top: 6px; }
   .final-photo-frame { padding: 9%; }
-  .final-photo-flower { width: 28%; }
   .final-locations { gap: 18px; margin-top: 28px; }
   .final-location { justify-content: center; }
   .final-copy { order: -1; }

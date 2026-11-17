@@ -1,19 +1,22 @@
 import { useEffect, useRef, useState, type SubmitEventHandler } from 'react'
 import cameraIcon from '../assets/i00000.png'
 import cakeIcon from '../assets/i000.png'
+import drinkIcon from '../assets/i9999.svg'
+import dressIcon from '../assets/i909090.png'
 import confirmationIcon from '../assets/i090.png'
 import locationIcon from '../assets/i00.png'
 import receptionIcon from '../assets/i0.svg'
 import punctualityIcon from '../assets/i0008.png'
 import silenceIcon from '../assets/i0000.png'
 import guestIcon from '../assets/i999000.png'
+import noInviteIcon from '../assets/i0999.svg'
 import weddingHomeIcon from '../assets/i9090900.png'
 import dressCodeIcon from '../assets/i0909.png'
-import messageIcon from '../assets/i.png'
+import hearthsIcon from '../assets/i9009.svg'
 import flowerImage from '../assets/s.png'
 import frameImage from '../assets/p00.png'
 import monogramImage from '../assets/IMG_5339.PNG'
-import firstPhoto from '../assets/x.jpeg'
+import firstPhoto from '../assets/xxx.jpeg'
 import finalPhoto from '../assets/xxxx.jpeg'
 
 interface InvitationPageProps {
@@ -27,15 +30,17 @@ interface InvitationPageProps {
 
 const guestInstructions = [
   { icon: confirmationIcon, text: 'Confirmar presença até dia 30/11' },
-  { icon: guestIcon, text: 'Convidado não convida' },
+  { icon: noInviteIcon, text: 'Convidado não convida' },
   { icon: punctualityIcon, text: 'Não se atrase, seja pontual' },
   { icon: cameraIcon, text: 'Não atrapalhe os fotógrafos' },
   { icon: silenceIcon, text: 'Deixe o seu celular no silencioso' },
-  { icon: weddingHomeIcon, text: 'Aguarde a liberação da mesa de doces' },
-  { icon: messageIcon, text: 'Não faça comentários negativos' },
-  { icon: cakeIcon, text: 'Aproveite bastante' },
-  { icon: confirmationIcon, text: 'Não saia sem se despedir dos noivos' },
+  { icon: cakeIcon, text: 'Aguarde a liberação da mesa de doces' },
+  { icon: guestIcon, text: 'Não faça comentários negativos' },
+  { icon: drinkIcon, text: 'Aproveite bastante' },
+  { icon: hearthsIcon, text: 'Não saia sem se despedir dos noivos' },
   { icon: dressCodeIcon, text: 'Dress code: esporte fino' },
+  { icon: weddingHomeIcon, text: 'Não leve a decoração para casa' },
+  { icon: dressIcon, text: 'Branco é a cor da noiva' },
 ]
 
 const weddingPalette = ['#000080', '#91a8d0', '#b0cddd', '#ca2c92', '#7c0606', '#e9e6c3']
@@ -123,6 +128,7 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
       </section>
 
       <section className="invitation-story invitation-section">
+        <img className="section-flower section-flower-story" src={flowerImage} alt="" aria-hidden="true" />
         <div className="story-copy">
           <p className="invitation-kicker">Uma nova história</p>
           <h2>O amor nos trouxe até aqui.</h2>
@@ -131,11 +137,10 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
         </div>
         <figure className="story-frame">
           <div className="story-frame-art"><img src={firstPhoto} alt="Jéssica e Nathan juntos ao ar livre" /><img className="story-frame-overlay" src={frameImage} alt="" aria-hidden="true" /></div>
-          <figcaption>onde tudo fica mais bonito quando estamos juntos</figcaption>
           <div className="invitation-countdown" aria-label="Contagem regressiva para o casamento">
             <p className="countdown-heading">Realizar-se no dia</p>
             <p className="countdown-date">26 <span>|</span> 12 <span>|</span> 2026</p>
-            <p className="countdown-weekday">Sábado às 18:30</p>
+            <p className="countdown-weekday">Sábado às <span className="countdown-time">18:30</span></p>
             <div className="countdown-panel">
               <p className="countdown-caption">O nosso “para sempre” começa em...</p>
               <div className="countdown-values">
@@ -153,8 +158,10 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
       </section>
 
       <section className="invitation-instructions invitation-section">
+        <img className="section-flower section-flower-instructions-left" src={flowerImage} alt="" aria-hidden="true" />
+        <img className="section-flower section-flower-instructions-right" src={flowerImage} alt="" aria-hidden="true" />
         <div className="instructions-heading">
-          <p className="invitation-kicker">Um carinho para este dia</p>
+          <p className="invitation-kicker">À espera do grande dia...</p>
           <h2>Manual do convidado</h2>
           <p>Alguns lembretes para que todos possam aproveitar a celebração com leveza.</p>
         </div>
@@ -164,6 +171,7 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
       </section>
 
       <section className="invitation-details invitation-section">
+        <img className="section-flower section-flower-details" src={flowerImage} alt="" aria-hidden="true" />
         <div className="details-copy">
           <p className="invitation-kicker">Um lembrete importante</p>
           <h2>Detalhes do convite</h2>
@@ -176,12 +184,12 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
       </section>
 
       <section className="invitation-final invitation-section">
+        <img className="section-flower section-flower-final-left" src={flowerImage} alt="" aria-hidden="true" />
+        <img className="section-flower section-flower-final-right" src={flowerImage} alt="" aria-hidden="true" />
         <div className="final-photo">
           <div className="final-photo-frame">
             <img className="final-photo-image" src={finalPhoto} alt="Jéssica e Nathan em frente a uma construção histórica" />
             <img className="final-photo-overlay" src={frameImage} alt="" aria-hidden="true" />
-            <img className="final-photo-flower final-photo-flower-left" src={flowerImage} alt="" aria-hidden="true" />
-            <img className="final-photo-flower final-photo-flower-right" src={flowerImage} alt="" aria-hidden="true" />
           </div>
         </div>
         <div className="final-copy">
@@ -199,7 +207,7 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
         <div><p className="invitation-kicker">Seu acesso reservado</p><h2>Agora, entre para continuar.</h2><p>Use o código que enviamos especialmente para você.</p></div>
         <form onSubmit={onSubmit} className="invitation-form">
           <label htmlFor="codigo">Código do convite</label>
-          <input id="codigo" type="text" value={codigo} onChange={(event) => onCodigoChange?.(event.target.value)} placeholder="Ex.: ABC123" disabled={carregando} autoFocus autoComplete="one-time-code" spellCheck="false" />
+          <input id="codigo" type="text" value={codigo} onChange={(event) => onCodigoChange?.(event.target.value)} placeholder="Ex.: ABC123" disabled={carregando} autoComplete="one-time-code" spellCheck="false" />
           {erro && <span className="codigo-erro" role="alert">{erro}</span>}
           <button type="submit" disabled={carregando || !codigo.trim()}>{carregando ? 'Conferindo...' : 'Continuar'}</button>
           <small>O código diferencia letras maiúsculas e minúsculas.</small>
