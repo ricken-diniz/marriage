@@ -197,8 +197,8 @@ export function InvitationPage({ codigo = '', onCodigoChange, onSubmit, carregan
           <h2>Até lá!</h2>
           <p>Que a nossa alegria também se torne parte da sua.</p>
           <div className="final-locations">
-            <article className="final-location"><img src={locationIcon} alt="" aria-hidden="true" /><div><span>Localização da cerimônia</span><strong>Paróquia São José</strong></div></article>
-            <article className="final-location"><img src={receptionIcon} alt="" aria-hidden="true" /><div><span>Localização da recepção</span><strong>Dubay Recepções</strong></div></article>
+            <article className="final-location"><img src={locationIcon} alt="" aria-hidden="true" /><div><span>Localização da cerimônia</span><strong>Paróquia São José</strong><a href="https://maps.app.goo.gl/RjxJV621GBNyrt7E6">Abrir no Google Maps</a></div></article>
+            <article className="final-location"><img src={receptionIcon} alt="" aria-hidden="true" /><div><span>Localização da recepção</span><strong>Dubay Recepções</strong><a href="https://maps.app.goo.gl/4N3ipGymPQAk4gbcA">Abrir no Google Maps</a></div></article>
           </div>
         </div>
       </section>

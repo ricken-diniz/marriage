@@ -2243,6 +2243,31 @@ button:disabled {
 .final-location div { display: grid; gap: 4px; }
 .final-location span { color: #8b7965; font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .final-location strong { color: #2d4164; font-family: Georgia, 'Times New Roman', serif; font-size: 1.25rem; font-weight: 400; }
+.final-location a {
+  display: inline-block;
+  margin-top: 0.35rem;
+  font-family: inherit;          /* ou a mesma sans-serif do rótulo "Localização da cerimônia" */
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: #68778c;                /* azul acinzentado, igual ao ícone */
+  text-decoration: none;
+  border-bottom: 1px solid rgba(138, 155, 192, 0.45);
+  padding-bottom: 1px;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+
+.final-location a:hover,
+.final-location a:focus-visible {
+  color: #5f739c;
+  border-bottom-color: #5f739c;
+}
+
+.final-location a:focus-visible {
+  outline: 2px solid rgba(95, 115, 156, 0.4);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
 
 .invitation-login { display: grid; grid-template-columns: 1fr 0.8fr; gap: 64px; align-items: center; background: #2d4164; }
 .invitation-login h2, .invitation-login .invitation-kicker { color: #f4efe7; }
