@@ -180,7 +180,7 @@ function MainApp() {
                     <div className="guest-section-heading"><div><span className="admin-kicker">Mural</span><h2>Deixe um pedacinho do seu carinho</h2></div><span>{mensagens.length} mensagens</span></div>
                     <form className="message-form" onSubmit={registrarMensagem}>
                         <label htmlFor="nova-mensagem">Deixe uma mensagem</label>
-                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva aqui um desejo, uma lembrança ou um conselho para nossa nova vida…" rows={4} maxLength={500} />
+                        <textarea id="nova-mensagem" value={mensagemNova} onChange={(event) => setMensagemNova(event.target.value)} placeholder="Escreva aqui um desejo, uma lembrança ou um conselho para nossa nova vida…" rows={4} maxLength={10000} />
                         <button className="button button-primary" type="submit" disabled={salvando || !mensagemNova.trim()}>{salvando ? 'Enviando...' : 'Publicar mensagem'}</button>
                     </form>
                     <div className="message-list">
@@ -204,7 +204,7 @@ function MainApp() {
                     <span className="admin-kicker">Seu convite</span>
                     <h2 id="companions-title">Quem vem com você?</h2>
                     <div className="companions-list">
-                        {companhias.map((companhia) => <div className="companion-item" key={companhia.id}><div><strong>{companhia.nome}</strong><span>{companhia.confirmacao_presenca === true ? 'Presença confirmada' : companhia.confirmacao_presenca === false ? 'Não poderá comparecer' : 'Aguardando confirmação'}</span></div><button type="button" disabled={salvando} onClick={() => void confirmarCompanhia(companhia, companhia.confirmacao_presenca !== true)}>{companhia.confirmacao_presenca === true ? 'Cancelar' : 'Confirmar'}</button></div>)}
+                        {companhias.map((companhia) => <div className="companion-item" key={companhia.id}><div><strong>{companhia.nome}</strong><span>{companhia.confirmacao_presenca === true ? 'Presença confirmada!' : companhia.confirmacao_presenca === false ? 'A presença não foi confirmada, clique no botão para alterar.' : 'Aguardando confirmação'}</span></div><button type="button" disabled={salvando} onClick={() => void confirmarCompanhia(companhia, companhia.confirmacao_presenca !== true)} style={{backgroundColor: companhia.confirmacao_presenca === true ? '#dc2626' : undefined, color: companhia.confirmacao_presenca === true ? '#ffffff' : undefined,}}>{companhia.confirmacao_presenca === true ? 'Cancelar' : 'Confirmar'}</button></div>)}
                         {!companhias.length && <p className="empty-state">Você não possui companhias neste convite.</p>}
                     </div>
                 </section>
